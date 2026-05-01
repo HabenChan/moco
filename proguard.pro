@@ -12,6 +12,22 @@
 -keep public class com.github.dreamhead.moco.parser.deserializer.*{*;}
 -keep public class com.github.dreamhead.moco.parser.model.*{*;}
 -keep public class com.github.dreamhead.moco.parser.model.websocket.*{*;}
+-keep public class com.github.dreamhead.moco.matcher.**{*;}
+-keep public class com.github.dreamhead.moco.extractor.**{*;}
+-keepclassmembers class com.github.dreamhead.moco.matcher.** {
+    *;
+}
+-keepclassmembers class com.github.dreamhead.moco.extractor.** {
+    *;
+}
+-keep public class com.github.dreamhead.moco.config.**{*;}
+-keepclassmembers class com.github.dreamhead.moco.config.** {
+    *;
+}
+-keep public class com.github.dreamhead.moco.handler.failover.**{*;}
+-keepclassmembers class com.github.dreamhead.moco.handler.failover.** {
+    *;
+}
 -keep public class com.github.dreamhead.moco.resource.reader.TemplateRequest{*;}
 -keep public class com.github.dreamhead.moco.resource.reader.TemplateRequest$TemplateClient{*;}
 -keep public class com.github.dreamhead.moco.Moco{*;}
@@ -19,7 +35,38 @@
 -keep public class com.github.dreamhead.moco.HttpMethod{*;}
 -keep public class com.github.dreamhead.moco.Runner{*;}
 -keep public class com.github.dreamhead.moco.Runnable{*;}
+-keep public class com.github.dreamhead.moco.HttpRequest{*;}
+-keep public class com.github.dreamhead.moco.HttpRequest{*;}
+-keep public class com.github.dreamhead.moco.DefaultHttpRequest{*;}
+-keepclassmembers class com.github.dreamhead.moco.DefaultHttpRequest {
+    *;
+}
 -keep public class com.github.dreamhead.moco.handler.**{*;}
+-keepclassmembers class com.github.dreamhead.moco.handler.** {
+    *;
+}
+-keep public class com.github.dreamhead.moco.sse.SseEvent{
+    private *;
+}
+-keepclassmembers class com.github.dreamhead.moco.sse.SseEvent {
+    public *;
+    public static ** newEvent(...);
+}
+-keep public class com.github.dreamhead.moco.sse.SseEvent$*{
+    *;
+}
+-keep public class com.github.dreamhead.moco.model.DefaultHttpResponse{
+    private *;
+}
+-keepclassmembers class com.github.dreamhead.moco.model.DefaultHttpResponse {
+    public java.util.List getSseEvents();
+    public void setSseEvents(java.util.List);
+}
+-keep public class com.github.dreamhead.moco.model.DefaultHttpMessage{*;}
+-keep public class com.github.dreamhead.moco.model.HttpMessage{*;}
+-keep public class com.github.dreamhead.moco.model.HttpResponse{*;}
+-keep public class com.github.dreamhead.moco.model.MessageContent{*;}
+
 -keep public class com.github.dreamhead.moco.dumper.*{*;}
 -keep public class com.github.dreamhead.moco.MocoJsonRunner{*;}
 -keep public class com.github.dreamhead.moco.util.Jsons{*;}
