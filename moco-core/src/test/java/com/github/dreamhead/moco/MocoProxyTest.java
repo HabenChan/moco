@@ -21,6 +21,9 @@ import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+
+import com.github.dreamhead.moco.helper.SseTestHelper;
+import com.github.dreamhead.moco.sse.SseEvent;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.EnumSource.Mode;
@@ -49,6 +52,8 @@ import static com.github.dreamhead.moco.Moco.seq;
 import static com.github.dreamhead.moco.Moco.status;
 import static com.github.dreamhead.moco.Moco.template;
 import static com.github.dreamhead.moco.Moco.text;
+import static com.github.dreamhead.moco.MocoSse.sse;
+import static com.github.dreamhead.moco.MocoSse.event;
 import static com.github.dreamhead.moco.Moco.uri;
 import static com.github.dreamhead.moco.Moco.version;
 import static com.github.dreamhead.moco.Moco.with;
@@ -62,8 +67,11 @@ import static com.google.common.collect.ImmutableMultimap.of;
 import static com.google.common.io.Files.asCharSource;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MocoProxyTest extends AbstractMocoHttpTest {
@@ -437,6 +445,127 @@ public class MocoProxyTest extends AbstractMocoHttpTest {
             byte[] bytes = ByteStreams.toByteArray(resource.openStream());
             String result = helper.postBytes(root(), bytes, gbk);
             assertThat(result, is("response"));
+        });
+    }
+
+    @Test
+    public void should_failover_with_sse_response_content(@TempDir final Path path) throws Exception {
+        final File tempFile = path.resolve("sse_failover").toFile();
+        server.request(by(uri("/target")))
+              .response(sse(
+                  event("message", "Hello"),
+                  event("message", "World")
+              ));
+        server.request(by(uri("/proxy")))
+              .response(proxy(remoteUrl("/target"), failover(tempFile.getAbsolutePath())));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
+                assertThat(sse.getHeader("Content-Type"), is("text/event-stream"));
+
+                SseEvent event1 = sse.readNextEvent();
+                assertThat(event1.toEventString(), containsString("event: message"));
+                assertThat(event1.toEventString(), containsString("data: Hello"));
+
+                SseEvent event2 = sse.readNextEvent();
+                assertThat(event2.toEventString(), containsString("event: message"));
+                assertThat(event2.toEventString(), containsString("data: World"));
+            }
+
+            String failoverContent = asCharSource(tempFile, Charset.defaultCharset()).read();
+            assertThat(failoverContent, containsString("Hello"));
+            assertThat(failoverContent, containsString("World"));
+        });
+    }
+
+    @Test
+    public void should_failover_for_unreachable_remote_server_with_sse() throws Exception {
+        server.request(by(uri("/proxy"))).response(proxy(remoteUrl("/target"), failover("src/test/resources/sse_failover.response")));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
+                assertThat(sse.getHeader("Content-Type"), is("text/event-stream"));
+
+                SseEvent event1 = sse.readNextEvent();
+                assertThat(event1.toEventString(), containsString("event: message"));
+                assertThat(event1.toEventString(), containsString("data: Hello"));
+
+                SseEvent event2 = sse.readNextEvent();
+                assertThat(event2.toEventString(), containsString("event: message"));
+                assertThat(event2.toEventString(), containsString("data: World"));
+            }
+        });
+    }
+
+    @Test
+    public void should_failover_with_sse_events_with_delay_preserved(@TempDir final Path path) throws Exception {
+        int delay = 100;
+        int delta = 10;
+        final File tempFile = path.resolve("sse_delay_failover").toFile();
+        server.request(by(uri("/target")))
+              .response(sse(
+                  event("message", "first").delay(delay),
+                  event("message", "second").delay(delay)
+              ));
+        server.request(by(uri("/proxy")))
+              .response(proxy(remoteUrl("/target"), failover(tempFile.getAbsolutePath())));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
+                long start = System.currentTimeMillis();
+                sse.readNextEvent();
+                long firstElapsed = System.currentTimeMillis() - start;
+                assertThat("First event should arrive quickly", firstElapsed, lessThan((long) delay));
+
+                long between1and2 = System.currentTimeMillis();
+                sse.readNextEvent();
+                long elapsed = System.currentTimeMillis() - between1and2;
+
+                assertThat("Delay between proxied events should be preserved",
+                        elapsed, greaterThanOrEqualTo((long) delay - delta));
+            }
+        });
+    }
+
+    @Test
+    public void should_failover_with_partial_sse_events(@TempDir final Path path) throws Exception {
+        final File tempFile = path.resolve("sse_partial_failover").toFile();
+        server.request(by(uri("/target")))
+              .response(sse(
+                  event("message", "Hello"),
+                  event("message", "World").delay(5000)
+              ));
+        server.request(by(uri("/proxy")))
+              .response(proxy(remoteUrl("/target"), failover(tempFile.getAbsolutePath())));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
+                SseEvent event1 = sse.readNextEvent();
+                assertThat(event1.toEventString(), containsString("data: Hello"));
+            }
+
+            String failoverContent = asCharSource(tempFile, Charset.defaultCharset()).read();
+            assertThat(failoverContent, containsString("Hello"));
+            assertThat(failoverContent, not(containsString("World")));
+        });
+    }
+
+    @Test
+    public void should_playback_sse_events() throws Exception {
+        server.request(by(uri("/proxy"))).response(proxy(remoteUrl("/target"), playback("src/test/resources/sse_failover.response")));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
+                assertThat(sse.getHeader("Content-Type"), is("text/event-stream"));
+
+                SseEvent event1 = sse.readNextEvent();
+                assertThat(event1.toEventString(), containsString("event: message"));
+                assertThat(event1.toEventString(), containsString("data: Hello"));
+
+                SseEvent event2 = sse.readNextEvent();
+                assertThat(event2.toEventString(), containsString("event: message"));
+                assertThat(event2.toEventString(), containsString("data: World"));
+            }
         });
     }
 }

@@ -1,5 +1,7 @@
 package com.github.dreamhead.moco.sse;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
@@ -21,6 +23,15 @@ public final class SseEvent {
         this.data = data;
         this.retry = retry;
         this.delay = delay;
+    }
+
+    @JsonCreator
+    public static SseEvent newEvent(@JsonProperty("id") final String id,
+                                    @JsonProperty("event") final String event,
+                                    @JsonProperty("data") final List<String> data,
+                                    @JsonProperty("retry") final Integer retry,
+                                    @JsonProperty("delay") final long delay) {
+        return new SseEvent(id, event, data, retry, delay);
     }
 
     public static SseEvent event(final String name, final List<String> data) {
@@ -53,6 +64,27 @@ public final class SseEvent {
                 unit.toMillis(duration));
     }
 
+    @JsonProperty
+    public String getId() {
+        return id;
+    }
+
+    @JsonProperty
+    public String getEvent() {
+        return event;
+    }
+
+    @JsonProperty
+    public List<String> getData() {
+        return data;
+    }
+
+    @JsonProperty
+    public Integer getRetry() {
+        return retry;
+    }
+
+    @JsonProperty
     public long getDelay() {
         return delay;
     }

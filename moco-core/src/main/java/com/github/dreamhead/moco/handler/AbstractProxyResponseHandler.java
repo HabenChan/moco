@@ -12,6 +12,7 @@ import com.github.dreamhead.moco.model.MessageContent;
 import com.github.dreamhead.moco.sse.SseEvent;
 import com.github.dreamhead.moco.sse.SseEventParser;
 import com.github.dreamhead.moco.util.ReaderLineIterator;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import io.netty.buffer.ByteBuf;
@@ -40,6 +41,7 @@ import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.core5.ssl.TrustStrategy;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,12 +191,12 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         if (failover.shouldFailover(remoteResponse)) {
             closeQuietly(remoteResponse);
             closeQuietly(client);
-            writeNormalResponse(failover.failover(request), httpResponse);
+            writeResponseFromFailover(failover.failover(request), httpResponse);
             return;
         }
 
         if (isSseResponse(remoteResponse)) {
-            writeSseResponse(remoteResponse, client, httpResponse);
+            writeSseResponse(request, remoteResponse, client, httpResponse);
             return;
         }
 
@@ -205,21 +207,59 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         writeNormalResponse(normalResponse, httpResponse);
     }
 
-    private void writeSseResponse(final ClassicHttpResponse remoteResponse,
+    private void writeResponseFromFailover(final HttpResponse response, final MutableHttpResponse httpResponse) {
+        if (response.getSseEvents() != null) {
+            writeSseEvents(response.getSseEvents(), httpResponse);
+            return;
+        }
+
+        writeNormalResponse(response, httpResponse);
+    }
+
+    private void writeSseEvents(final Iterable<SseEvent> events, final MutableHttpResponse httpResponse) {
+        httpResponse.addHeader(CONTENT_TYPE, "text/event-stream");
+        httpResponse.addHeader(CACHE_CONTROL, "no-cache");
+        httpResponse.addHeader(CONNECTION, "keep-alive");
+        httpResponse.addHeader("X-Accel-Buffering", "no");
+        httpResponse.setSseEvents(events);
+    }
+
+    private void writeSseResponse(final HttpRequest request,
+                                   final ClassicHttpResponse remoteResponse,
                                    final CloseableHttpClient client,
                                    final MutableHttpResponse httpResponse) throws IOException {
         ReaderLineIterator lineIterator = new ReaderLineIterator(
                 new InputStreamReader(remoteResponse.getEntity().getContent(), StandardCharsets.UTF_8));
         Iterable<String> lines = () -> lineIterator;
         Iterable<SseEvent> events = new SseEventParser().parse(lines);
-        httpResponse.addHeader(CONTENT_TYPE, "text/event-stream");
-        httpResponse.addHeader(CACHE_CONTROL, "no-cache");
-        httpResponse.addHeader(CONNECTION, "keep-alive");
-        httpResponse.addHeader("X-Accel-Buffering", "no");
-        httpResponse.setSseEvents(new CloseOnExhaustIterable(events, () -> {
+
+        Closeable closeable = () -> {
             closeQuietly(remoteResponse);
             closeQuietly(client);
-        }));
+        };
+
+        SseEventConsumer consumer = getSseEventConsumer(request, remoteResponse);
+
+        writeSseEvents(new SseEventStreamIterable(events, closeable, consumer), httpResponse);
+    }
+
+    private @Nullable SseEventConsumer getSseEventConsumer(final HttpRequest request,
+                                                           final ClassicHttpResponse remoteResponse) {
+        if (failover.hasFailover())
+                return collected -> recordSseFailover(request, remoteResponse, collected);
+
+        return null;
+    }
+
+    private void recordSseFailover(final HttpRequest request,
+                                    final ClassicHttpResponse remoteResponse,
+                                    final ImmutableList<SseEvent> collected) {
+        HttpResponse response = DefaultHttpResponse.builder()
+                .withVersion(HttpProtocolVersion.versionOf(remoteResponse.getVersion().toString()))
+                .withStatus(remoteResponse.getCode())
+                .withSseEvents(collected)
+                .build();
+        failover.onCompleteResponse(request, response);
     }
 
     private HttpResponse toHttpResponse(final ClassicHttpResponse remoteResponse) throws IOException {
@@ -279,7 +319,7 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
     private void doProxy(final HttpRequest request, final URL remoteUrl, final MutableHttpResponse httpResponse) {
         if (failover.isPlayback()) {
             try {
-                writeNormalResponse(failover.failover(request), httpResponse);
+                writeResponseFromFailover(failover.failover(request), httpResponse);
                 return;
             } catch (RuntimeException ignored) {
             }
@@ -304,7 +344,7 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
             closeQuietly(remoteResponse);
             closeQuietly(client);
             logger.error("Failed to load remote and try to failover", e);
-            writeNormalResponse(failover.failover(request), httpResponse);
+            writeResponseFromFailover(failover.failover(request), httpResponse);
         }
     }
 
@@ -355,14 +395,23 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         return contentType != null && contentType.getValue().contains("text/event-stream");
     }
 
-    private static final class CloseOnExhaustIterable implements Iterable<SseEvent> {
+    @FunctionalInterface
+    interface SseEventConsumer {
+        void accept(ImmutableList<SseEvent> events);
+    }
+
+    private static final class SseEventStreamIterable implements Iterable<SseEvent> {
         private final Iterable<SseEvent> events;
         private final Closeable closeable;
+        private final SseEventConsumer onEvent;
         private boolean iterated;
 
-        CloseOnExhaustIterable(final Iterable<SseEvent> events, final Closeable closeable) {
+        SseEventStreamIterable(final Iterable<SseEvent> events,
+                               final Closeable closeable,
+                               final SseEventConsumer onEvent) {
             this.events = events;
             this.closeable = closeable;
+            this.onEvent = onEvent;
         }
 
         @Override
@@ -373,29 +422,44 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
             iterated = true;
             return new Iterator<SseEvent>() {
                 private final Iterator<SseEvent> delegate = events.iterator();
+                private final ImmutableList.Builder<SseEvent> collected = ImmutableList.builder();
+                private boolean closed;
 
                 @Override
                 public boolean hasNext() {
-                    boolean hasMore = delegate.hasNext();
-                    if (!hasMore) {
-                        closeQuietly();
+                    try {
+                        boolean hasMore = delegate.hasNext();
+                        if (!hasMore) {
+                            close();
+                        }
+                        return hasMore;
+                    } catch (Exception e) {
+                        close();
+                        return false;
                     }
-                    return hasMore;
                 }
 
                 @Override
                 public SseEvent next() {
-                    return delegate.next();
+                    SseEvent event = delegate.next();
+                    if (onEvent != null) {
+                        collected.add(event);
+                        onEvent.accept(collected.build());
+                    }
+                    return event;
+                }
+
+                private void close() {
+                    if (closed) {
+                        return;
+                    }
+                    closed = true;
+                    try {
+                        closeable.close();
+                    } catch (IOException ignored) {
+                    }
                 }
             };
         }
-
-        private void closeQuietly() {
-            try {
-                closeable.close();
-            } catch (IOException ignored) {
-            }
-        }
     }
-
 }

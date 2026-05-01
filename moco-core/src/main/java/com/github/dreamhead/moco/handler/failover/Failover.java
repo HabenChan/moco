@@ -46,4 +46,8 @@ public final class Failover {
     public boolean isPlayback() {
         return strategy == FailoverStrategy.PLAYBACK;
     }
+
+    public boolean hasFailover() {
+        return executor != FailoverExecutor.EMPTY_FAILOVER;
+    }
 }

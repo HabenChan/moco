@@ -1,0 +1,21 @@
+[ {
+  "request" : {
+    "version" : "HTTP/1.1",
+    "uri" : "/proxy",
+    "method" : "GET",
+    "headers" : {
+      "Host" : "localhost:12306"
+    }
+  },
+  "response" : {
+    "version" : "HTTP/1.1",
+    "status" : 200,
+    "headers" : {
+      "Content-Type" : "text/event-stream"
+    },
+    "sseEvents" : [
+      { "event" : "message", "data" : ["Hello"], "delay" : 0 },
+      { "event" : "message", "data" : ["World"], "delay" : 0 }
+    ]
+  }
+} ]
