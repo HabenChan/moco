@@ -1,3 +1,8 @@
+# Release 1.6.1
+
+## Implementation Details
+* SSE support in proxy failover
+
 # Release 1.6.0(20-Apr-2026)
 
 ## APIs

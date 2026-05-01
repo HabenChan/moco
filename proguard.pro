@@ -56,6 +56,7 @@
 }
 
 -keep public class io.netty.channel.DefaultChannelPipeline{*;}
+-keep public class io.netty.util.concurrent.ConcurrentSkipListIntObjMultimap{*;}
 -keep public class io.netty.handler.codec.http.cookie.DefaultCookie{*;}
 -keep public class io.netty.handler.codec.http.cookie.CookieHeaderNames{*;}
 -keep public class io.netty.handler.codec.http.cookie.CookieHeaderNames$SameSite{*;}
