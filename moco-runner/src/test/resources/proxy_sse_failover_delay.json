@@ -1,0 +1,24 @@
+[
+    {
+        "request": {
+            "uri": "/sse-delay-target"
+        },
+        "response": {
+            "sse": [
+                { "event": "message", "data": "first", "delay": 100 },
+                { "event": "message", "data": "second", "delay": 100 }
+            ]
+        }
+    },
+    {
+        "request": {
+            "uri": "/sse-proxy-delay"
+        },
+        "response": {
+            "proxy": {
+                "url": "http://localhost:12306/sse-delay-target",
+                "failover": "src/test/resources/standalone_sse_failover_delay.json"
+            }
+        }
+    }
+]

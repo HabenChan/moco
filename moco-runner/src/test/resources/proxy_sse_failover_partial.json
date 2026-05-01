@@ -1,0 +1,24 @@
+[
+    {
+        "request": {
+            "uri": "/sse-target-partial"
+        },
+        "response": {
+            "sse": [
+                { "event": "message", "data": "Hello" },
+                { "event": "message", "data": "World", "delay": 30000 }
+            ]
+        }
+    },
+    {
+        "request": {
+            "uri": "/sse-proxy-partial"
+        },
+        "response": {
+            "proxy": {
+                "url": "http://localhost:12306/sse-target-partial",
+                "failover": "src/test/resources/standalone_sse_failover_partial.json"
+            }
+        }
+    }
+]
