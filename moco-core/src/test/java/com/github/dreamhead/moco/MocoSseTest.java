@@ -231,6 +231,39 @@ public class MocoSseTest extends AbstractMocoHttpTest {
     }
 
     @Test
+    public void should_send_first_event_after_its_delay() throws Exception {
+        int delay = 100;
+        int delta = 10;
+        server.request(by(uri("/sse")))
+              .response(sse(
+                  event("message", "first").delay(delay),
+                  event("message", "second")
+              ));
+
+        running(server, () -> {
+            try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/sse"))) {
+                long start = System.currentTimeMillis();
+                SseEvent firstEvent = sse.readNextEvent();
+                long firstElapsed = System.currentTimeMillis() - start;
+
+                // 第一个 event 应该等待自己的 delay 后才发送
+                assertThat("First event should arrive after its delay",
+                        firstElapsed, greaterThanOrEqualTo((long) delay - delta));
+                assertThat("First event should contain correct data", firstEvent.toEventString(), containsString("first"));
+
+                // 第二个 event 没有 delay，应该立即到达
+                long betweenStart = System.currentTimeMillis();
+                SseEvent secondEvent = sse.readNextEvent();
+                long betweenElapsed = System.currentTimeMillis() - betweenStart;
+
+                assertThat("Second event should arrive quickly (no delay)",
+                        betweenElapsed, lessThan((long) delay - delta));
+                assertThat("Second event should contain correct data", secondEvent.toEventString(), containsString("second"));
+            }
+        });
+    }
+
+    @Test
     public void should_set_correct_content_type() throws Exception {
         server.request(by(uri("/sse")))
               .response(sse(data("test")));
@@ -331,7 +364,6 @@ public class MocoSseTest extends AbstractMocoHttpTest {
     @Test
     public void should_proxy_sse_events_with_delay() throws Exception {
         int delay = 100;
-        int delta = 10;
         server.request(by(uri("/target")))
               .response(sse(
                   event("message", "first").delay(delay),
@@ -343,16 +375,15 @@ public class MocoSseTest extends AbstractMocoHttpTest {
         running(server, () -> {
             try (SseTestHelper sse = new SseTestHelper(helper.getClient(), remoteUrl("/proxy"))) {
                 long start = System.currentTimeMillis();
-                sse.readNextEvent();
+                SseEvent firstEvent = sse.readNextEvent();
                 long firstElapsed = System.currentTimeMillis() - start;
-                assertThat("First event should arrive quickly", firstElapsed, lessThan((long) delay));
 
-                long between1and2 = System.currentTimeMillis();
-                sse.readNextEvent();
-                long elapsed = System.currentTimeMillis() - between1and2;
+                assertThat("First event should arrive after its delay",
+                        firstElapsed, greaterThanOrEqualTo((long) delay - 20));
+                assertThat("First event should contain correct data", firstEvent.toEventString(), containsString("first"));
 
-                assertThat("Delay between proxied events should be preserved",
-                        elapsed, greaterThanOrEqualTo((long) delay - delta));
+                SseEvent secondEvent = sse.readNextEvent();
+                assertThat("Second event should contain correct data", secondEvent.toEventString(), containsString("second"));
             }
         });
     }

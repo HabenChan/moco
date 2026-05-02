@@ -103,20 +103,24 @@ public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
     private void streamSseEvents(final ChannelHandlerContext ctx,
                                  final Iterator<SseEvent> events) {
         try {
-            while (ctx.channel().isActive()) {
-                if (!events.hasNext()) {
-                    finishSseStream(ctx);
-                    return;
-                }
-                SseEvent event = events.next();
+            if (!ctx.channel().isActive() || !events.hasNext()) {
+                finishSseStream(ctx);
+                return;
+            }
+
+            SseEvent event = events.next();
+            long delay = event.getDelay();
+
+            if (delay > 0) {
+                ctx.executor().schedule(
+                        () -> {
+                            writeSseEvent(ctx, event);
+                            streamSseEvents(ctx, events);
+                        },
+                        delay, TimeUnit.MILLISECONDS);
+            } else {
                 writeSseEvent(ctx, event);
-                long delay = event.getDelay();
-                if (delay > 0) {
-                    ctx.executor().schedule(
-                            () -> streamSseEvents(ctx, events),
-                            delay, TimeUnit.MILLISECONDS);
-                    return;
-                }
+                streamSseEvents(ctx, events);
             }
         } catch (Exception e) {
             server.onException(e);

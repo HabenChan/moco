@@ -23,12 +23,6 @@
       "data" : [ "Hello" ],
       "retry" : null,
       "delay" : 0
-    }, {
-      "id" : null,
-      "event" : "message",
-      "data" : [ "World" ],
-      "retry" : null,
-      "delay" : 0
     } ]
   }
 } ]
