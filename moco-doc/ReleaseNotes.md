@@ -1,4 +1,4 @@
-# Release 1.6.1
+# Release 1.6.1(2-May-2026)
 
 ## APIs
 * SSE event delay semantics changed: delay affects current event self.
