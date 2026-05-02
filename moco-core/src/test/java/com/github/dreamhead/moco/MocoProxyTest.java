@@ -515,15 +515,19 @@ public class MocoProxyTest extends AbstractMocoHttpTest {
                 long start = System.currentTimeMillis();
                 sse.readNextEvent();
                 long firstElapsed = System.currentTimeMillis() - start;
-                assertThat("First event should arrive quickly", firstElapsed, lessThan((long) delay));
+                assertThat("First event should arrive after target server's first delay",
+                        firstElapsed, greaterThanOrEqualTo((long) delay - delta));
 
                 long between1and2 = System.currentTimeMillis();
                 sse.readNextEvent();
                 long elapsed = System.currentTimeMillis() - between1and2;
-
-                assertThat("Delay between proxied events should be preserved",
-                        elapsed, greaterThanOrEqualTo((long) delay - delta));
+                assertThat("Second event should arrive after target server's second delay",
+                        firstElapsed + elapsed, greaterThanOrEqualTo((long) delay * 2 - delta * 2));
             }
+
+            String failoverContent = asCharSource(tempFile, Charset.defaultCharset()).read();
+            assertThat(failoverContent, containsString("first"));
+            assertThat(failoverContent, containsString("second"));
         });
     }
 

@@ -1,5 +1,8 @@
 # Release 1.6.1
 
+## APIs
+* SSE event delay semantics changed: delay affects current event self.
+
 ## Implementation Details
 * SSE support in proxy failover
 
