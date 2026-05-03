@@ -92,7 +92,11 @@ public class SseResponseHandlerTest {
     @Test
     public void should_parse_and_store_events_from_resource() {
         SseResponseHandler handler = (SseResponseHandler) MocoSse.sse(
-                ResourceFactory.textResource(request -> "data: Hello\n\ndata: World\n"));
+                ResourceFactory.textResource(request -> """
+                        data: Hello
+
+                        data: World
+                        """));
         DefaultMutableHttpResponse response = DefaultMutableHttpResponse.newResponse(mockRequest(), 200);
         handler.doWriteToResponse(mockRequest(), response);
 

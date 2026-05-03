@@ -21,7 +21,10 @@ public class SseEventParserTest {
 
     @Test
     public void should_parse_single_event() {
-        List<SseEvent> events = parse("event: message\ndata: Hello\n");
+        List<SseEvent> events = parse("""
+                event: message
+                data: Hello
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("event: message"));
         assertThat(events.get(0).toEventString(), containsString("data: Hello"));
@@ -29,27 +32,42 @@ public class SseEventParserTest {
 
     @Test
     public void should_parse_multiple_events() {
-        List<SseEvent> events = parse("event: message\ndata: Hello\n\nevent: message\ndata: World\n");
+        List<SseEvent> events = parse("""
+                event: message
+                data: Hello
+
+                event: message
+                data: World
+                """);
         assertThat(events.size(), is(2));
     }
 
     @Test
     public void should_parse_event_with_id() {
-        List<SseEvent> events = parse("id: 1\ndata: Hello\n");
+        List<SseEvent> events = parse("""
+                id: 1
+                data: Hello
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("id: 1"));
     }
 
     @Test
     public void should_parse_event_with_retry() {
-        List<SseEvent> events = parse("data: Hello\nretry: 3000\n");
+        List<SseEvent> events = parse("""
+                data: Hello
+                retry: 3000
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("retry: 3000"));
     }
 
     @Test
     public void should_parse_multi_data_event() {
-        List<SseEvent> events = parse("data: line1\ndata: line2\n");
+        List<SseEvent> events = parse("""
+                data: line1
+                data: line2
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("data: line1"));
         assertThat(events.get(0).toEventString(), containsString("data: line2"));
@@ -57,7 +75,9 @@ public class SseEventParserTest {
 
     @Test
     public void should_throw_on_missing_data() {
-        assertThrows(IllegalArgumentException.class, () -> parse("event: message\n"));
+        assertThrows(IllegalArgumentException.class, () -> parse("""
+                event: message
+                """));
     }
 
     @Test
@@ -68,14 +88,18 @@ public class SseEventParserTest {
 
     @Test
     public void should_strip_multiple_spaces_after_colon() {
-        List<SseEvent> events = parse("data:   Hello\n");
+        List<SseEvent> events = parse("""
+                data:   Hello
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("data: Hello"));
     }
 
     @Test
     public void should_handle_no_space_after_colon() {
-        List<SseEvent> events = parse("data:Hello\n");
+        List<SseEvent> events = parse("""
+                data:Hello
+                """);
         assertThat(events.size(), is(1));
         assertThat(events.get(0).toEventString(), containsString("data: Hello"));
     }
