@@ -122,13 +122,13 @@ subprojects {
     }
 
     test {
-        testLogging {
-            afterSuite { desc, result ->
-                if (!desc.parent) { // will match the outermost suite
+        addTestListener([
+            afterSuite: { suite, result ->
+                if (!suite.parent) {
                     println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
                 }
             }
-        }
+        ] as TestListener)
     }
 
     tasks.withType(JavaCompile) {
