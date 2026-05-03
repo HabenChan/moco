@@ -18,8 +18,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = JavaVersion.VERSION_1_8
-        languageLevel = JavaVersion.VERSION_1_8
+        jdkName = JavaVersion.VERSION_17
+        languageLevel = JavaVersion.VERSION_17
 
         vcs = "Git"
     }
@@ -42,7 +42,7 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
 
