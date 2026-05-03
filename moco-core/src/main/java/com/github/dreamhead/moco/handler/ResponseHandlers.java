@@ -24,20 +24,20 @@ public final class ResponseHandlers {
             .build();
 
     public static ResponseHandler responseHandler(final ResponseElement element) {
-        if (element instanceof ResponseHandler) {
-            return (ResponseHandler) element;
+        if (element instanceof ResponseHandler handler) {
+            return handler;
         }
 
-        if (element instanceof Resource) {
-            return responseHandler((Resource) element);
+        if (element instanceof Resource resource) {
+            return responseHandler(resource);
         }
 
-        if (element instanceof HttpHeader) {
-            return new HttpHeaderResponseHandler((HttpHeader) element);
+        if (element instanceof HttpHeader header) {
+            return new HttpHeaderResponseHandler(header);
         }
 
-        if (element instanceof MocoProcedure) {
-            return new ProcedureResponseHandler((MocoProcedure) element);
+        if (element instanceof MocoProcedure procedure) {
+            return new ProcedureResponseHandler(procedure);
         }
 
         throw new IllegalArgumentException("Unknown response element:" + element.getClass());

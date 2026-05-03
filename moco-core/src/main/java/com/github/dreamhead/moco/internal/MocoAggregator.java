@@ -11,8 +11,7 @@ public final class MocoAggregator extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
-        if (msg instanceof ByteBuf) {
-            ByteBuf buf = (ByteBuf) msg;
+        if (msg instanceof ByteBuf buf) {
             bufs.addComponent(buf);
             bufs.writerIndex(bufs.writerIndex() + buf.writerIndex());
         }

@@ -412,13 +412,13 @@ public final class Moco {
     public static ResponseHandler seq(final String content, final String... contents) {
         checkNotNull(content, "Sequence content should not be null");
         checkArgument(contents.length > 0, "Sequence content should not be null");
-        return newSeq(asIterable(content, contents).stream().map(textToResource()).collect(Collectors.toList()));
+        return newSeq(asIterable(content, contents).stream().map(textToResource()).toList());
     }
 
     public static ResponseHandler seq(final Resource content, final Resource... contents) {
         checkNotNull(content, "Sequence content should not be null");
         checkArgument(contents.length > 0, "Sequence contents should not be null");
-        return newSeq(asIterable(content, contents).stream().map(Moco::with).collect(Collectors.toList()));
+        return newSeq(asIterable(content, contents).stream().map(Moco::with).toList());
     }
 
     public static ResponseHandler seq(final ResponseHandler handler, final ResponseHandler... handlers) {
@@ -430,13 +430,13 @@ public final class Moco {
     public static ResponseHandler cycle(final String content, final String... contents) {
         checkNotNull(content, "Cycle content should not be null");
         checkArgument(contents.length > 0, "Cycle content should not be null");
-        return newCycle(asIterable(content, contents).stream().map(textToResource()).collect(Collectors.toList()));
+        return newCycle(asIterable(content, contents).stream().map(textToResource()).toList());
     }
 
     public static ResponseHandler cycle(final Resource content, final Resource... contents) {
         checkNotNull(content, "Cycle content should not be null");
         checkArgument(contents.length > 0, "Cycle contents should not be null");
-        return newCycle(asIterable(content, contents).stream().map(Moco::with).collect(Collectors.toList()));
+        return newCycle(asIterable(content, contents).stream().map(Moco::with).toList());
     }
 
     public static ResponseHandler cycle(final ResponseHandler handler, final ResponseHandler... handlers) {

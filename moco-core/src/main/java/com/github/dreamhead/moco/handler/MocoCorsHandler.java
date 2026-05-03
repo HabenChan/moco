@@ -76,7 +76,7 @@ public final class MocoCorsHandler extends AbstractHttpResponseHandler {
                                    final Predicate<CorsConfig> requestPredicate, final boolean isQualified) {
         List<CorsConfig> filteredConfigs = Arrays.stream(configs)
                 .filter(requestPredicate)
-                .collect(Collectors.toList());
+                .toList();
 
         if (isQualified && !filteredConfigs.stream().allMatch(config -> config.isQualified(httpRequest))) {
             return;

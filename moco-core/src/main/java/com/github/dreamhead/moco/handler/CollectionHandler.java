@@ -28,7 +28,7 @@ public abstract class CollectionHandler extends AbstractResponseHandler {
     public final ResponseHandler doApply(final MocoConfig config) {
         return newCollectionHandler(handlers.stream()
                 .map(input -> input.apply(config))
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     protected abstract int next(int index, int size);

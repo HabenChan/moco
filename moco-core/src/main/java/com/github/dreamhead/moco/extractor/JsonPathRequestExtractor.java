@@ -45,8 +45,7 @@ public final class JsonPathRequestExtractor extends HttpRequestExtractor<Object>
 
     @SuppressWarnings("unchecked")
     private Object toStringArray(final Object content) {
-        if (content instanceof List) {
-            List list = (List) content;
+        if (content instanceof List<?> list) {
             return list.stream()
                     .map(Object::toString)
                     .toArray(String[]::new);

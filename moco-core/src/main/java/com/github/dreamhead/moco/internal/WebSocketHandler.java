@@ -36,9 +36,8 @@ public class WebSocketHandler {
                                                       final WebSocketFrame message) {
         final InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
         final Client client = new Client(address);
-        if (message instanceof PingWebSocketFrame) {
-            return Optional.of(websocketServer.handlePingPong((PingWebSocketFrame) message,
-                    client));
+        if (message instanceof PingWebSocketFrame pingFrame) {
+            return Optional.of(websocketServer.handlePingPong(pingFrame, client));
         }
 
         Optional<WebsocketResponse> response = websocketServer.handleRequest(ctx, message, client);

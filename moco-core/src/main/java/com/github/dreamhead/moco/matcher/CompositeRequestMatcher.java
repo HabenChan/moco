@@ -20,7 +20,7 @@ public abstract class CompositeRequestMatcher extends AbstractRequestMatcher {
     private Iterable<RequestMatcher> applyToMatchers(final MocoConfig config) {
         Iterable<RequestMatcher> appliedMatchers = StreamSupport.stream(matchers.spliterator(), false)
                 .map(matcher -> matcher.apply(config))
-                .collect(Collectors.toList());
+                .toList();
         if (Iterables.elementsEqual(matchers, appliedMatchers)) {
             return this.matchers;
         }

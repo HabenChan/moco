@@ -62,7 +62,7 @@ public final class HttpDumpers {
     public static String asHeaders(final HttpMessage message) {
         return HEAD_JOINER.join(message.getHeaders().entrySet().stream()
                 .flatMap(HttpDumpers::toEntries)
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     private static Stream<Map.Entry<String, String>> toEntries(final Map.Entry<String, String[]> input) {

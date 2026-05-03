@@ -72,7 +72,7 @@ public final class RestRequestDispatcher {
                                                              final HttpMethod method) {
         return filter(settings, type).stream()
                 .filter(input -> input.isSimple() && input.isFor(method))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private <T extends RestSetting> ImmutableList<T> filter(final Iterable<RestSetting> settings,
@@ -125,7 +125,7 @@ public final class RestRequestDispatcher {
                 List<Object> result = Streams.stream(settings)
                         .map(setting -> (JsonResponseHandler)setting.getHandler())
                         .map(JsonResponseHandler::getPojo)
-                        .collect(Collectors.toList());
+                        .toList();
                 return of(with(Moco.json(result)));
             }
         }

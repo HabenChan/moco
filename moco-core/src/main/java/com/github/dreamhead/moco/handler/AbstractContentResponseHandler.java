@@ -21,9 +21,7 @@ public abstract class AbstractContentResponseHandler extends AbstractResponseHan
         Request request = context.getRequest();
         Response response = context.getResponse();
 
-        if (request instanceof HttpRequest && response instanceof MutableHttpResponse) {
-            HttpRequest httpRequest = (HttpRequest) request;
-            MutableHttpResponse httpResponse = (MutableHttpResponse) response;
+        if (request instanceof HttpRequest httpRequest && response instanceof MutableHttpResponse httpResponse) {
             doWriteToResponse(context, httpRequest, httpResponse);
             return;
         }

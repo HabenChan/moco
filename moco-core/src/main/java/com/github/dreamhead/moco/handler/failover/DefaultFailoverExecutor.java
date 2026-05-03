@@ -53,7 +53,7 @@ public final class DefaultFailoverExecutor implements FailoverExecutor {
         if (session.isPresent()) {
             return sessions.stream()
                     .filter(isForRequest(targetSession.getRequest()).negate())
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         return sessions;

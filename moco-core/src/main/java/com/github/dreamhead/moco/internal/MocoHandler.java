@@ -49,13 +49,13 @@ public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     protected void channelRead0(final ChannelHandlerContext ctx, final Object message) {
-        if (message instanceof FullHttpRequest) {
-            handleHttpRequest(ctx, (FullHttpRequest) message);
+        if (message instanceof FullHttpRequest request) {
+            handleHttpRequest(ctx, request);
             return;
         }
 
-        if (message instanceof WebSocketFrame) {
-            websocketHandler.handleFrame(ctx, (WebSocketFrame) message);
+        if (message instanceof WebSocketFrame frame) {
+            websocketHandler.handleFrame(ctx, frame);
         }
     }
 

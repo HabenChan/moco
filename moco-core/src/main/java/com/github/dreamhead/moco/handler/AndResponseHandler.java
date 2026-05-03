@@ -31,7 +31,7 @@ public final class AndResponseHandler extends AbstractResponseHandler {
     public ResponseHandler doApply(final MocoConfig config) {
         return and(StreamSupport.stream(handlers.spliterator(), false)
                 .map(handler -> handler.apply(config))
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     public static ResponseHandler and(final Iterable<ResponseHandler> handlers) {
@@ -46,7 +46,7 @@ public final class AndResponseHandler extends AbstractResponseHandler {
         List<ResponseElement> elements = asIterable(handler, handlers);
         List<ResponseHandler> responseHandlers = elements.stream()
                 .map(Moco::with)
-                .collect(Collectors.toList());
+                .toList();
         return new AndResponseHandler(responseHandlers);
     }
 }

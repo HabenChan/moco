@@ -38,18 +38,16 @@ public abstract class AbstractOperatorMatcher<T> extends AbstractRequestMatcher 
     }
 
     private boolean matchContent(final T target) {
-        if (target instanceof String) {
-            return predicate.test((String) target);
+        if (target instanceof String string) {
+            return predicate.test(string);
         }
 
-        if (target instanceof String[]) {
-            String[] contents = (String[]) target;
+        if (target instanceof String[] contents) {
             return Arrays.stream(contents).filter(Objects::nonNull).anyMatch(predicate);
         }
 
-        if (target instanceof MessageContent) {
-            MessageContent actualTarget = (MessageContent) target;
-            return predicate.test(actualTarget.toString());
+        if (target instanceof MessageContent content) {
+            return predicate.test(content.toString());
         }
 
         return false;
