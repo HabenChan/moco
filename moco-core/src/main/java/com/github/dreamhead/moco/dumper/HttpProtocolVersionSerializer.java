@@ -1,16 +1,14 @@
 package com.github.dreamhead.moco.dumper;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
 import com.github.dreamhead.moco.HttpProtocolVersion;
 
-import java.io.IOException;
-
-public final class HttpProtocolVersionSerializer extends JsonSerializer<HttpProtocolVersion> {
+public final class HttpProtocolVersionSerializer extends ValueSerializer<HttpProtocolVersion> {
     @Override
     public void serialize(final HttpProtocolVersion value, final JsonGenerator generator,
-                          final SerializerProvider provider) throws IOException {
+                          final SerializationContext provider) {
         generator.writeString(value.text());
     }
 }

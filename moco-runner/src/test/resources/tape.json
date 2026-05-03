@@ -1,7 +1,6 @@
 {
   "content" : {
     "tape-foo" : {
-      "version" : "HTTP/1.1",
       "content" : {
         "content" : "Zm9v",
         "charset" : "UTF-8"
@@ -14,8 +13,9 @@
         "Content-Type" : [ "text/plain; charset=UTF-8" ]
       },
       "method" : "POST",
+      "queries" : { },
       "uri" : "/record-tape",
-      "queries" : { }
+      "version" : "HTTP/1.1"
     }
   }
 }

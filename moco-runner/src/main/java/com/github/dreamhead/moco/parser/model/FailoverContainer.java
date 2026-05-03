@@ -1,6 +1,6 @@
 package com.github.dreamhead.moco.parser.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.github.dreamhead.moco.Moco;
 import com.github.dreamhead.moco.handler.failover.Failover;
 import com.github.dreamhead.moco.parser.deserializer.FailoverContainerDeserializer;

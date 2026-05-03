@@ -1,24 +1,23 @@
 package com.github.dreamhead.moco.parser.deserializer;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.parser.model.FileContainer;
 import com.github.dreamhead.moco.parser.model.SseContainer;
 import com.github.dreamhead.moco.parser.model.TextContainer;
 import com.github.dreamhead.moco.sse.SseEvent;
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class SseContainerDeserializer extends JsonDeserializer<SseContainer> {
+public final class SseContainerDeserializer extends ValueDeserializer<SseContainer> {
     @Override
-    public SseContainer deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public SseContainer deserialize(final JsonParser jp, final DeserializationContext ctxt)  {
+        JsonToken currentToken = jp.currentToken();
 
         if (currentToken == JsonToken.START_ARRAY) {
             return SseContainer.fromEvents(parseEvents(jp));
@@ -31,7 +30,7 @@ public final class SseContainerDeserializer extends JsonDeserializer<SseContaine
         return (SseContainer) ctxt.handleUnexpectedToken(SseContainer.class, jp);
     }
 
-    private SseContainer parseObject(final JsonParser jp) throws IOException {
+    private SseContainer parseObject(final JsonParser jp)  {
         SseObjectVar var = jp.readValueAs(SseObjectVar.class);
         Delay delay = Delay.from(var.delay);
 
@@ -47,7 +46,7 @@ public final class SseContainerDeserializer extends JsonDeserializer<SseContaine
             return SseContainer.fromEvents(builder.build(), delay.duration, delay.unit);
         }
 
-        throw new IOException("Invalid SSE configuration: expected 'file' or 'events'");
+        throw new IllegalArgumentException("Invalid SSE configuration: expected 'file' or 'events'");
     }
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -96,7 +95,7 @@ public final class SseContainerDeserializer extends JsonDeserializer<SseContaine
         }
     }
 
-    private List<SseEvent> parseEvents(final JsonParser jp) throws IOException {
+    private List<SseEvent> parseEvents(final JsonParser jp)  {
         ImmutableList.Builder<SseEvent> builder = ImmutableList.builder();
         while (jp.nextToken() != JsonToken.END_ARRAY) {
             builder.add(parseEvent(jp));
@@ -104,7 +103,7 @@ public final class SseContainerDeserializer extends JsonDeserializer<SseContaine
         return builder.build();
     }
 
-    private SseEvent parseEvent(final JsonParser jp) throws IOException {
+    private SseEvent parseEvent(final JsonParser jp)  {
         EventVar eventVar = jp.readValueAs(EventVar.class);
         return eventVar.toEvent();
     }

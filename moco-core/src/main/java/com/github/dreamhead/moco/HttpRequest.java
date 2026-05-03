@@ -1,6 +1,6 @@
 package com.github.dreamhead.moco;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.github.dreamhead.moco.model.DefaultHttpRequest;
 import com.google.common.collect.ImmutableMap;
 

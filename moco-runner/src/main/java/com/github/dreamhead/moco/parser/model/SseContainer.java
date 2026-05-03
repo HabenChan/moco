@@ -1,6 +1,6 @@
 package com.github.dreamhead.moco.parser.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.github.dreamhead.moco.MocoSse;
 import com.github.dreamhead.moco.ResponseHandler;
 import com.github.dreamhead.moco.handler.SseResponseHandler;

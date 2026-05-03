@@ -99,8 +99,8 @@ subprojects {
                 "com.google.guava:guava:$guavaVersion",
                 "io.netty:netty-codec-http:$nettyVersion",
                 "io.netty:netty-handler:$nettyVersion",
-                "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion",
-                "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion",
+                "tools.jackson.core:jackson-databind:$jacksonVersion",
+                "tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion",
                 "org.apache.httpcomponents.client5:httpclient5:$httpClientVersion",
                 "com.jayway.jsonpath:json-path:$jsonpathVersion",
                 "org.freemarker:freemarker:$freemarkerVersion",
@@ -154,6 +154,11 @@ configure(subprojects.findAll {!it.name.startsWith("moco-junit")}) {
 
     test {
         useJUnitPlatform()
+
+        // Suppress CDS warning about bootstrap classpath
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+            jvmArgs('-Xshare:off')
+        }
     }
 }
 

@@ -1,10 +1,10 @@
 package com.github.dreamhead.moco.parser.deserializer;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.parser.model.FileContainer;
 import com.github.dreamhead.moco.parser.model.TextContainer;
 
@@ -14,12 +14,12 @@ import static com.github.dreamhead.moco.parser.model.FileContainer.aFileContaine
 import static com.github.dreamhead.moco.parser.model.FileContainer.asFileContainer;
 import static com.github.dreamhead.moco.util.Strings.strip;
 
-public final class FileContainerDeserializer extends JsonDeserializer<FileContainer> {
+public final class FileContainerDeserializer extends ValueDeserializer<FileContainer> {
     private TextContainerDeserializerHelper helper = new TextContainerDeserializerHelper();
 
     @Override
-    public FileContainer deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public FileContainer deserialize(final JsonParser jp, final DeserializationContext ctxt)  {
+        JsonToken currentToken = jp.currentToken();
         if (currentToken == JsonToken.VALUE_STRING) {
             return asFileContainer(helper.text(jp));
         }
@@ -27,7 +27,7 @@ public final class FileContainerDeserializer extends JsonDeserializer<FileContai
         if (currentToken == JsonToken.START_OBJECT) {
             jp.nextToken();
 
-            String target = strip(jp.getText());
+            String target = strip(jp.getValueAsString());
             if (isForFileContainer(target)) {
                 return toFileContainer(jp);
             }
@@ -38,7 +38,7 @@ public final class FileContainerDeserializer extends JsonDeserializer<FileContai
         return (FileContainer) ctxt.handleUnexpectedToken(FileContainer.class, jp);
     }
 
-    private FileContainer toFileContainer(final JsonParser jp) throws IOException {
+    private FileContainer toFileContainer(final JsonParser jp)  {
         FileVar file = jp.readValueAs(FileVar.class);
         return file.toFileContainer();
     }

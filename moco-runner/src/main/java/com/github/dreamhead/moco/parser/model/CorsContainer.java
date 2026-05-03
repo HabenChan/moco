@@ -2,7 +2,7 @@ package com.github.dreamhead.moco.parser.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.github.dreamhead.moco.handler.cors.CorsConfig;
 import com.github.dreamhead.moco.parser.deserializer.CorsContainerDeserializer;
 import com.google.common.base.MoreObjects;

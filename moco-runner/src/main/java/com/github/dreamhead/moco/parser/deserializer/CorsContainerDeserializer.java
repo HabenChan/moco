@@ -2,20 +2,19 @@ package com.github.dreamhead.moco.parser.deserializer;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.parser.model.CorsContainer;
 import com.github.dreamhead.moco.parser.model.LatencyContainer;
 
-import java.io.IOException;
 import java.util.List;
 
-public final class CorsContainerDeserializer extends JsonDeserializer<CorsContainer> {
+public final class CorsContainerDeserializer extends ValueDeserializer<CorsContainer> {
     @Override
-    public CorsContainer deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public CorsContainer deserialize(final JsonParser jp, final DeserializationContext ctxt)  {
+        JsonToken currentToken = jp.currentToken();
         if (currentToken == JsonToken.VALUE_TRUE) {
             return CorsContainer.newContainer();
         }

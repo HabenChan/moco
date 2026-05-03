@@ -1,10 +1,10 @@
 package com.github.dreamhead.moco.parser.deserializer;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.parser.model.CookieContainer;
 import com.github.dreamhead.moco.parser.model.LatencyContainer;
 
@@ -12,12 +12,12 @@ import java.io.IOException;
 
 import static com.github.dreamhead.moco.util.Strings.strip;
 
-public final class CookieContainerDeserializer extends JsonDeserializer<CookieContainer> {
+public final class CookieContainerDeserializer extends ValueDeserializer<CookieContainer> {
     @Override
-    public CookieContainer deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public CookieContainer deserialize(final JsonParser jp, final DeserializationContext ctxt)  {
+        JsonToken currentToken = jp.currentToken();
         if (currentToken == JsonToken.VALUE_STRING) {
-            return CookieContainer.newContainer(strip(jp.getText()));
+            return CookieContainer.newContainer(strip(jp.getValueAsString()));
         }
 
         if (currentToken == JsonToken.START_OBJECT) {

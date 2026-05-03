@@ -1,21 +1,19 @@
 [ {
   "request" : {
-    "version" : "HTTP/1.1",
     "content" : null,
     "headers" : {
       "Host" : [ "localhost:12306" ]
     },
     "method" : "GET",
+    "queries" : null,
     "uri" : "/sse-proxy-playback",
-    "queries" : null
+    "version" : "HTTP/1.1"
   },
   "response" : {
-    "version" : "HTTP/1.1",
     "content" : null,
     "headers" : {
       "Content-Type" : [ "text/event-stream" ]
     },
-    "status" : 200,
     "sseEvents" : [ {
       "id" : null,
       "event" : "message",
@@ -28,11 +26,12 @@
       "data" : [ "World" ],
       "retry" : null,
       "delay" : 0
-    } ]
+    } ],
+    "status" : 200,
+    "version" : "HTTP/1.1"
   }
 }, {
   "request" : {
-    "version" : "HTTP/1.1",
     "content" : "",
     "headers" : {
       "content-length" : [ "0" ],
@@ -41,14 +40,13 @@
       "Accept-Encoding" : [ "gzip, x-gzip, deflate" ]
     },
     "method" : "GET",
+    "queries" : { },
     "uri" : "/sse-proxy-failover",
-    "queries" : { }
+    "version" : "HTTP/1.1"
   },
   "response" : {
-    "version" : "HTTP/1.1",
     "content" : null,
     "headers" : { },
-    "status" : 200,
     "sseEvents" : [ {
       "id" : null,
       "event" : "message",
@@ -61,6 +59,8 @@
       "data" : [ "World" ],
       "retry" : null,
       "delay" : 0
-    } ]
+    } ],
+    "status" : 200,
+    "version" : "HTTP/1.1"
   }
 } ]

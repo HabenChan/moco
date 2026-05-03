@@ -1,19 +1,19 @@
 package com.github.dreamhead.moco.parser.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.parser.model.TextContainer;
 
 import java.io.IOException;
 
-public final class TextContainerDeserializer extends JsonDeserializer<TextContainer> {
+public final class TextContainerDeserializer extends ValueDeserializer<TextContainer> {
     private TextContainerDeserializerHelper helper = new TextContainerDeserializerHelper();
 
     @Override
-    public TextContainer deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public TextContainer deserialize(final JsonParser jp, final DeserializationContext ctxt)  {
+        JsonToken currentToken = jp.currentToken();
         if (currentToken == JsonToken.VALUE_STRING) {
             return helper.text(jp);
         }

@@ -1,22 +1,20 @@
 package com.github.dreamhead.moco.dumper;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.github.dreamhead.moco.model.MessageContent;
-
-import java.io.IOException;
 
 import static com.github.dreamhead.moco.model.MessageContent.content;
 import static com.github.dreamhead.moco.util.Strings.strip;
 
-public final class MessageContentDeserializer extends JsonDeserializer<MessageContent> {
+public final class MessageContentDeserializer extends ValueDeserializer<MessageContent> {
     @Override
-    public MessageContent deserialize(final JsonParser jp, final DeserializationContext ctx) throws IOException {
-        JsonToken currentToken = jp.getCurrentToken();
+    public MessageContent deserialize(final JsonParser jp, final DeserializationContext ctx) {
+        JsonToken currentToken = jp.currentToken();
         if (currentToken == JsonToken.VALUE_STRING) {
-            return content(strip(jp.getText()));
+            return content(strip(jp.getValueAsString()));
         }
 
         if (currentToken == JsonToken.START_OBJECT) {

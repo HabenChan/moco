@@ -5,6 +5,7 @@ import com.github.dreamhead.moco.ResponseHandler;
 import com.github.dreamhead.moco.parser.ResponseHandlerFactory;
 import com.google.common.base.MoreObjects;
 import com.github.dreamhead.moco.parser.deserializer.SseContainerDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Map;
 
@@ -27,7 +28,7 @@ public class ResponseSetting extends BaseResourceSetting {
 
     private CorsContainer cors;
 
-    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = SseContainerDeserializer.class)
+    @JsonDeserialize(using = SseContainerDeserializer.class)
     private SseContainer sse;
 
     protected final ResponseSetting asResponseSetting() {

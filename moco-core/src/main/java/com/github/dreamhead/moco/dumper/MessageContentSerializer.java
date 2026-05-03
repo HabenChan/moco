@@ -1,18 +1,16 @@
 package com.github.dreamhead.moco.dumper;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
 import com.github.dreamhead.moco.model.MessageContent;
 
-import java.io.IOException;
-
-public class MessageContentSerializer extends JsonSerializer<MessageContent> {
+public class MessageContentSerializer extends ValueSerializer<MessageContent> {
     @Override
     public final void serialize(final MessageContent value, final JsonGenerator generator,
-                          final SerializerProvider serializers) throws IOException {
+                          final SerializationContext serializers) {
         if (value.hasCharset()) {
-            generator.writeObject(new InternalMessageContent(value.getContent(), value.getCharset()));
+            generator.writePOJO(new InternalMessageContent(value.getContent(), value.getCharset()));
             return;
         }
 

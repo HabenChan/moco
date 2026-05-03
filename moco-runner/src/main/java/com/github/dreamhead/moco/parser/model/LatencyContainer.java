@@ -1,6 +1,6 @@
 package com.github.dreamhead.moco.parser.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.github.dreamhead.moco.Moco;
 import com.github.dreamhead.moco.parser.deserializer.LatencyContainerDeserializer;
 import com.github.dreamhead.moco.procedure.LatencyProcedure;

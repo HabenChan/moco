@@ -1,6 +1,5 @@
 [ {
   "request" : {
-    "version" : "HTTP/1.1",
     "content" : "",
     "headers" : {
       "content-length" : [ "0" ],
@@ -9,14 +8,13 @@
       "Accept-Encoding" : [ "gzip, x-gzip, deflate" ]
     },
     "method" : "GET",
+    "queries" : { },
     "uri" : "/sse-proxy-delay",
-    "queries" : { }
+    "version" : "HTTP/1.1"
   },
   "response" : {
-    "version" : "HTTP/1.1",
     "content" : null,
     "headers" : { },
-    "status" : 200,
     "sseEvents" : [ {
       "id" : null,
       "event" : "message",
@@ -29,6 +27,8 @@
       "data" : [ "second" ],
       "retry" : null,
       "delay" : 0
-    } ]
+    } ],
+    "status" : 200,
+    "version" : "HTTP/1.1"
   }
 } ]

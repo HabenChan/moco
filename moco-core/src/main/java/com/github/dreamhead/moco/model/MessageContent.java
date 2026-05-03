@@ -1,7 +1,7 @@
 package com.github.dreamhead.moco.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import com.github.dreamhead.moco.MocoException;
 import com.github.dreamhead.moco.dumper.MessageContentDeserializer;
 import com.github.dreamhead.moco.dumper.MessageContentSerializer;

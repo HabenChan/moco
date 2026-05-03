@@ -1,6 +1,6 @@
 package com.github.dreamhead.moco.matcher;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.github.dreamhead.moco.RequestMatcher;
 import com.github.dreamhead.moco.extractor.ContentRequestExtractor;
 import com.github.dreamhead.moco.resource.Resource;
@@ -29,12 +29,13 @@ public final class JsonStructRequestMatcher extends JsonRequestMatcher {
             return true;
         }
 
-        if (actual.isTextual() && expected.isTextual()) {
+        if (actual.isString() && expected.isString()) {
             return true;
         }
 
         if (actual.isObject() && expected.isObject()) {
-            return Streams.stream(expected.fieldNames())
+            return expected.properties().stream()
+                    .map(p -> p.getKey())
                     .allMatch(name -> doMatch(actual.get(name), expected.get(name)));
         }
 
@@ -43,7 +44,7 @@ public final class JsonStructRequestMatcher extends JsonRequestMatcher {
                 return true;
             }
             JsonNode templateNode = expected.get(0);
-            return Streams.stream(actual)
+            return com.google.common.collect.Streams.stream(actual)
                     .allMatch(node -> doMatch(node, templateNode));
         }
 
