@@ -158,5 +158,5 @@ configure(subprojects.findAll {!it.name.startsWith("moco-junit")}) {
 }
 
 wrapper {
-    gradleVersion = '8.14.3'
+    gradleVersion = '9.5.0'
 }

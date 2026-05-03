@@ -18,11 +18,11 @@ project.dependencies {
     runtimeOnly("org.tinylog:slf4j-tinylog:$tinylogVersion")
     runtimeOnly("org.tinylog:tinylog-impl:$tinylogVersion")
 
-    testImplementation project(':moco-core').sourceSets.test.output
+    testImplementation rootProject.project(':moco-core').sourceSets.test.output
 
     testRuntimeOnly(
-            project(':moco-core').sourceSets.test.resources,
-            project(':moco-runner').sourceSets.main.resources
+            rootProject.project(':moco-core').sourceSets.test.resources,
+            rootProject.project(':moco-runner').sourceSets.main.resources
     )
 }
 
