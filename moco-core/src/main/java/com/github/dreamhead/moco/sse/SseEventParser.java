@@ -124,20 +124,11 @@ public final class SseEventParser {
 
         for (Map.Entry<String, String> field : fields) {
             switch (field.getKey()) {
-                case "id":
-                    id = field.getValue();
-                    break;
-                case "event":
-                    eventName = field.getValue();
-                    break;
-                case "data":
-                    data.add(field.getValue());
-                    break;
-                case "retry":
-                    retry = Integer.parseInt(field.getValue());
-                    break;
-                default:
-                    break;
+                case "id" -> id = field.getValue();
+                case "event" -> eventName = field.getValue();
+                case "data" -> data.add(field.getValue());
+                case "retry" -> retry = Integer.parseInt(field.getValue());
+                default -> { }
             }
         }
 
