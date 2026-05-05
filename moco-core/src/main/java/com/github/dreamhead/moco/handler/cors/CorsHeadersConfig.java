@@ -3,11 +3,9 @@ package com.github.dreamhead.moco.handler.cors;
 import com.github.dreamhead.moco.HttpRequest;
 import com.github.dreamhead.moco.MutableHttpResponse;
 
-public final class CorsHeadersConfig implements NonSimpleRequestCorsConfig {
-    private final String headers;
-
+public record CorsHeadersConfig(String headers) implements NonSimpleRequestCorsConfig {
     public CorsHeadersConfig(final String[] headers) {
-        this.headers = String.join(",", headers);
+        this(String.join(",", headers));
     }
 
     @Override

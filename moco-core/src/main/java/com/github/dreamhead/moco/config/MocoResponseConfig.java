@@ -5,13 +5,7 @@ import com.github.dreamhead.moco.ResponseHandler;
 
 import static com.github.dreamhead.moco.handler.AndResponseHandler.and;
 
-public final class MocoResponseConfig implements MocoConfig<ResponseHandler> {
-    private final ResponseHandler handler;
-
-    public MocoResponseConfig(final ResponseHandler handler) {
-        this.handler = handler;
-    }
-
+public record MocoResponseConfig(ResponseHandler handler) implements MocoConfig<ResponseHandler> {
     @Override
     public boolean isFor(final String id) {
         return RESPONSE_ID.equalsIgnoreCase(id);

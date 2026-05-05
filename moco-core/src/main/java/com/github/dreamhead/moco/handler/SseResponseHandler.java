@@ -51,7 +51,7 @@ public class SseResponseHandler extends AbstractHttpResponseHandler {
 
         ImmutableList.Builder<SseEvent> builder = ImmutableList.builder();
         for (SseEvent event : events) {
-            if (event.getDelay() > 0) {
+            if (event.delay() > 0) {
                 builder.add(event);
             } else {
                 builder.add(event.delay(defaultDelay));

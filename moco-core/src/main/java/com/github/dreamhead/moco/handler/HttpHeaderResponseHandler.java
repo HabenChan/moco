@@ -15,8 +15,8 @@ public class HttpHeaderResponseHandler extends AbstractHttpResponseHandler {
 
     @Override
     protected final void doWriteToResponse(final HttpRequest httpRequest, final MutableHttpResponse httpResponse) {
-        String value = header.getValue().readFor(httpRequest).toString();
-        httpResponse.addHeader(header.getName(), value);
+        String value = header.value().readFor(httpRequest).toString();
+        httpResponse.addHeader(header.name(), value);
     }
 
     @Override

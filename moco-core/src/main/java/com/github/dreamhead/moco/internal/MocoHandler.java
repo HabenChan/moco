@@ -109,7 +109,7 @@ public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             SseEvent event = events.next();
-            long delay = event.getDelay();
+            long delay = event.delay();
 
             if (delay > 0) {
                 ctx.executor().schedule(

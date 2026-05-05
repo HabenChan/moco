@@ -41,6 +41,6 @@ public class SseEventSerializationTest {
         SseEvent original = SseEvent.event("message", ImmutableList.of("Hello")).delay(100);
         String json = Jsons.toJson(original);
         SseEvent deserialized = Jsons.toObject(json, SseEvent.class);
-        assertThat(deserialized.getDelay(), is(100L));
+        assertThat(deserialized.delay(), is(100L));
     }
 }

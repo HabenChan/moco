@@ -6,13 +6,7 @@ import com.github.dreamhead.moco.MutableHttpResponse;
 
 import java.util.Arrays;
 
-public final class CorsMethodsConfig implements NonSimpleRequestCorsConfig {
-    private final String[] methods;
-
-    public CorsMethodsConfig(final String[] methods) {
-        this.methods = methods;
-    }
-
+public record CorsMethodsConfig(String[] methods) implements NonSimpleRequestCorsConfig {
     @Override
     public boolean isQualified(final HttpRequest httpRequest) {
         HttpMethod method = httpRequest.getMethod();

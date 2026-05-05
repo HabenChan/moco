@@ -3,13 +3,7 @@ package com.github.dreamhead.moco.handler.cors;
 import com.github.dreamhead.moco.HttpRequest;
 import com.github.dreamhead.moco.MutableHttpResponse;
 
-public final class CorsOriginConfig implements CorsConfig {
-    private final String origin;
-
-    public CorsOriginConfig(final String origin) {
-        this.origin = origin;
-    }
-
+public record CorsOriginConfig(String origin) implements CorsConfig {
     @Override
     public boolean isQualified(final HttpRequest httpRequest) {
         String requestOrigin = httpRequest.getHeader("Origin");

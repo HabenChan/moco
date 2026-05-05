@@ -4,13 +4,7 @@ import com.github.dreamhead.moco.MocoConfig;
 
 import static com.github.dreamhead.moco.util.URLs.join;
 
-public final class MocoContextConfig implements MocoConfig<String> {
-    private final String context;
-
-    public MocoContextConfig(final String context) {
-        this.context = context;
-    }
-
+public record MocoContextConfig(String context) implements MocoConfig<String> {
     @Override
     public boolean isFor(final String id) {
         return URI_ID.equalsIgnoreCase(id);

@@ -135,11 +135,11 @@ public final class TemplateRequest {
         }
 
         public final String getAddress() {
-            return client.getAddress();
+            return client.address();
         }
 
         public final int getPort() {
-            return client.getPort();
+            return client.port();
         }
     }
 }

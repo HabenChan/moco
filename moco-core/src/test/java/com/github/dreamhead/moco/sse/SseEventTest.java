@@ -42,14 +42,14 @@ public class SseEventTest {
     @Test
     public void should_create_event_with_delay() {
         SseEvent event = SseEvent.data(ImmutableList.of("Hello")).delay(50);
-        assertThat(event.getDelay(), is(50L));
+        assertThat(event.delay(), is(50L));
         assertThat(event.toEventString(), is("data: Hello\n\n"));
     }
 
     @Test
     public void should_create_event_with_delay_and_time_unit() {
         SseEvent event = SseEvent.data(ImmutableList.of("Hello")).delay(1, TimeUnit.SECONDS);
-        assertThat(event.getDelay(), is(1000L));
+        assertThat(event.delay(), is(1000L));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class SseEventTest {
         assertThat(result, containsString("event: message\n"));
         assertThat(result, containsString("retry: 3000\n"));
         assertThat(result, containsString("data: Hello\n"));
-        assertThat(event.getDelay(), is(50L));
+        assertThat(event.delay(), is(50L));
     }
 
     @Test

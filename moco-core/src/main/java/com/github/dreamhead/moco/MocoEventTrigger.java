@@ -1,14 +1,6 @@
 package com.github.dreamhead.moco;
 
-public final class MocoEventTrigger implements ConfigApplier<MocoEventTrigger> {
-    private final MocoEvent event;
-    private final MocoEventAction action;
-
-    public MocoEventTrigger(final MocoEvent event, final MocoEventAction action) {
-        this.event = event;
-        this.action = action;
-    }
-
+public record MocoEventTrigger(MocoEvent event, MocoEventAction action) implements ConfigApplier<MocoEventTrigger> {
     public boolean isFor(final MocoEvent event) {
         return this.event == event;
     }
@@ -19,8 +11,8 @@ public final class MocoEventTrigger implements ConfigApplier<MocoEventTrigger> {
 
     @Override
     public MocoEventTrigger apply(final MocoConfig config) {
-        MocoEventAction appliedAction = this.action.apply(config);
-        if (appliedAction != this.action) {
+        MocoEventAction appliedAction = action.apply(config);
+        if (appliedAction != action) {
             return new MocoEventTrigger(event, appliedAction);
         }
 

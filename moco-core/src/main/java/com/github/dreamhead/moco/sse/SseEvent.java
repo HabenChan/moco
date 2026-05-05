@@ -2,27 +2,22 @@ package com.github.dreamhead.moco.sse;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public final class SseEvent {
-    private final String id;
-    private final String event;
-    private final List<String> data;
-    private final Integer retry;
-    private final long delay;
-
-    SseEvent(final String id, final String event, final List<String> data,
-             final Integer retry, final long delay) {
-        this.id = id;
-        this.event = event;
-        this.data = data;
-        this.retry = retry;
-        this.delay = delay;
+public record SseEvent(
+        String id,
+        String event,
+        List<String> data,
+        Integer retry,
+        long delay
+) {
+    public SseEvent {
+        if (retry != null) {
+            Preconditions.checkArgument(retry > 0, "Retry must be positive");
+        }
     }
 
     @JsonCreator
@@ -64,31 +59,6 @@ public final class SseEvent {
                 unit.toMillis(duration));
     }
 
-    @JsonProperty
-    public String getId() {
-        return id;
-    }
-
-    @JsonProperty
-    public String getEvent() {
-        return event;
-    }
-
-    @JsonProperty
-    public List<String> getData() {
-        return data;
-    }
-
-    @JsonProperty
-    public Integer getRetry() {
-        return retry;
-    }
-
-    @JsonProperty
-    public long getDelay() {
-        return delay;
-    }
-
     public String toEventString() {
         StringBuilder sb = new StringBuilder();
         if (id != null) {
@@ -105,39 +75,5 @@ public final class SseEvent {
         }
         sb.append('\n');
         return sb.toString();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SseEvent sseEvent = (SseEvent) o;
-        return delay == sseEvent.delay
-                && Objects.equals(id, sseEvent.id)
-                && Objects.equals(event, sseEvent.event)
-                && Objects.equals(data, sseEvent.data)
-                && Objects.equals(retry, sseEvent.retry);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, event, data, retry, delay);
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .omitNullValues()
-                .omitEmptyValues()
-                .add("id", id)
-                .add("event", event)
-                .add("data", data)
-                .add("retry", retry)
-                .add("delay", delay)
-                .toString();
     }
 }

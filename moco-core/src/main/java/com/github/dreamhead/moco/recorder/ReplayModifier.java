@@ -5,24 +5,18 @@ import com.github.dreamhead.moco.MocoConfig;
 import com.github.dreamhead.moco.ResponseHandler;
 import com.github.dreamhead.moco.internal.SessionContext;
 
-public class ReplayModifier implements RecorderConfig, ConfigApplier<ReplayModifier> {
-    private final ResponseHandler responseHandler;
-
-    public ReplayModifier(final ResponseHandler responseHandler) {
-        this.responseHandler = responseHandler;
-    }
-
+public record ReplayModifier(ResponseHandler responseHandler) implements RecorderConfig, ConfigApplier<ReplayModifier> {
     @Override
-    public final boolean isFor(final String name) {
+    public boolean isFor(final String name) {
         return MODIFIER.equalsIgnoreCase(name);
     }
 
-    public final void writeToResponse(final SessionContext context) {
+    public void writeToResponse(final SessionContext context) {
         responseHandler.writeToResponse(context);
     }
 
     @Override
-    public final ReplayModifier apply(final MocoConfig config) {
+    public ReplayModifier apply(final MocoConfig config) {
         ResponseHandler applied = this.responseHandler.apply(config);
         if (applied != this.responseHandler) {
             return new ReplayModifier(applied);

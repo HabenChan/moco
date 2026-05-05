@@ -5,13 +5,7 @@ import com.github.dreamhead.moco.Request;
 import com.github.dreamhead.moco.Response;
 import com.github.dreamhead.moco.sse.SseEvent;
 
-public final class CompositeMonitor implements MocoMonitor {
-    private final Iterable<MocoMonitor> monitors;
-
-    public CompositeMonitor(final Iterable<MocoMonitor> monitors) {
-        this.monitors = monitors;
-    }
-
+public record CompositeMonitor(Iterable<MocoMonitor> monitors) implements MocoMonitor {
     @Override
     public void onMessageArrived(final Request request) {
         for (MocoMonitor monitor : monitors) {

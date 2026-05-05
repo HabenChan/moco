@@ -5,13 +5,7 @@ import com.github.dreamhead.moco.RequestMatcher;
 
 import static com.github.dreamhead.moco.Moco.and;
 
-public final class MocoRequestConfig implements MocoConfig<RequestMatcher> {
-    private final RequestMatcher requestMatcher;
-
-    public MocoRequestConfig(final RequestMatcher requestMatcher) {
-        this.requestMatcher = requestMatcher;
-    }
-
+public record MocoRequestConfig(RequestMatcher requestMatcher) implements MocoConfig<RequestMatcher> {
     @Override
     public boolean isFor(final String id) {
         return REQUEST_ID.equalsIgnoreCase(id);
