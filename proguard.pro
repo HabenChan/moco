@@ -28,6 +28,10 @@
 -keepclassmembers class com.github.dreamhead.moco.handler.failover.** {
     *;
 }
+-keep public class com.github.dreamhead.moco.recorder.**{*;}
+-keepclassmembers class com.github.dreamhead.moco.recorder.** {
+    *;
+}
 -keep public class com.github.dreamhead.moco.resource.reader.TemplateRequest{*;}
 -keep public class com.github.dreamhead.moco.resource.reader.TemplateRequest$TemplateClient{*;}
 -keep public class com.github.dreamhead.moco.Moco{*;}
@@ -75,20 +79,6 @@
     public int shutdownPort();
 }
 
--keep public class org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory{*;}
--keep public class org.apache.hc.client5.http.impl.classic.HttpClientBuilder{*;}
--keep public class org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder{*;}
--keep public class org.apache.hc.core5.http.message.BasicClassicHttpRequest{*;}
--keep public class org.apache.hc.core5.http.message.BasicClassicHttpResponse{*;}
--keep public class org.apache.hc.core5.http.io.HttpClientResponseHandler{*;}
--keep public class org.apache.hc.client5.http.config.RequestConfig{*;}
--keep public class org.apache.hc.client5.http.ClientProtocolException{*;}
--keep public class org.apache.hc.client5.http.impl.classic.CloseableHttpClient{*;}
--keep public class org.apache.hc.core5.http.ClassicHttpResponse{*;}
--keep public class org.apache.hc.core5.http.HttpResponse{*;}
--keep public class org.apache.hc.core5.http.HttpMessage{*;}
--keep public class org.apache.hc.core5.http.MessageHeaders{*;}
--keep public class org.apache.hc.core5.http.Header{*;}
 
 -keep public class com.google.common.io.Files{*;}
 -keep public class com.google.common.collect.ImmutableMultimap{*;}
@@ -110,13 +100,10 @@
 -keep public class com.ctc.wstx.stax.WstxInputFactory{*;}
 -keep public class com.ctc.wstx.stax.WstxOutputFactory{*;}
 
-#jce.jar
--dontwarn org.apache.http.impl.auth.**
-#jsse.jar
--dontwarn org.apache.http.conn.**
--dontwarn org.apache.http.impl.**
 
 -dontwarn io.netty.**
+-dontwarn org.slf4j.**
+-dontwarn org.slf4j.event.**
 -dontwarn com.jayway.jsonpath.spi.impl.JacksonProvider
 -dontwarn com.jayway.jsonpath.spi.json.JsonOrgJsonProvider
 -dontwarn com.jayway.jsonpath.spi.json.JettisonProvider*
@@ -138,3 +125,7 @@
 -dontwarn org.brotli.dec.**
 -dontwarn edu.umd.cs.findbugs.annotations.**
 -dontwarn com.sun.jna.**
+-dontwarn tools.jackson.**
+-dontwarn com.fasterxml.jackson.core.**
+-dontwarn com.fasterxml.jackson.annotation.**
+-dontwarn com.fasterxml.jackson.databind.**
