@@ -6,7 +6,7 @@ import static java.lang.String.format;
 
 public record VerificationData(Iterable<Request> requests, RequestMatcher matcher, String mismatchFormat) {
     public String mismatchDescription(final int actualSize, final String expected) {
-        return format(mismatchFormat, expected, actualSize);
+        return mismatchFormat.formatted(expected, actualSize);
     }
 
     public int matchedSize() {

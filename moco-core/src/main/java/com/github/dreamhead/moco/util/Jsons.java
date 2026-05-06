@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.lang.String.format;
 
 public final class Jsons {
     private static Logger logger = LoggerFactory.getLogger(Jsons.class);
@@ -98,7 +97,7 @@ public final class Jsons {
                 return DEFAULT_MAPPER.<List<T>>readValue(text, type).stream();
             } catch (UnrecognizedPropertyException e) {
                 logger.info("Unrecognized field: {}", e.getMessage());
-                throw new MocoException(format("Unrecognized field [ %s ], please check!", e.getPropertyName()));
+                throw new MocoException("Unrecognized field [ %s ], please check!".formatted(e.getPropertyName()));
             } catch (DatabindException e) {
                 logger.info("{} {}", e.getMessage(), e.getPathReference());
                 throw new MocoException(e);

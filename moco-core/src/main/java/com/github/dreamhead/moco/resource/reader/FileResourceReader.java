@@ -11,8 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static java.lang.String.format;
-
 public final class FileResourceReader extends AbstractFileResourceReader {
     private final MocoConfig config;
 
@@ -31,7 +29,7 @@ public final class FileResourceReader extends AbstractFileResourceReader {
         Path path = Paths.get(pathname);
 
         if (!Files.exists(path)) {
-            throw new IllegalArgumentException(format("%s does not exist", path.getFileName().toString()));
+            throw new IllegalArgumentException("%s does not exist".formatted(path.getFileName().toString()));
         }
 
         try {

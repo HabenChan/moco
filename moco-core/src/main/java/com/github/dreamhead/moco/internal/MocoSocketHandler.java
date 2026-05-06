@@ -17,7 +17,6 @@ import java.util.Optional;
 
 import static com.github.dreamhead.moco.model.MessageContent.content;
 import static io.netty.channel.ChannelHandler.Sharable;
-import static java.lang.String.format;
 
 @Sharable
 public final class MocoSocketHandler extends SimpleChannelInboundHandler<ByteBuf> {
@@ -35,7 +34,7 @@ public final class MocoSocketHandler extends SimpleChannelInboundHandler<ByteBuf
         SessionContext context = new SessionContext(request, new DefaultSocketResponse());
         Optional<Response> response = server.getResponse(context);
         Response actual = response.orElseThrow(() ->
-                new MocoException(format("No handler found for request: %s", context.getRequest().getContent())));
+                new MocoException("No handler found for request: %s".formatted(context.getRequest().getContent())));
         ctx.write(ByteBufs.toByteBuf(actual.getContent().getContent()));
     }
 

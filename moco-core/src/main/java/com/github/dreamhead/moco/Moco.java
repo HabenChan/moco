@@ -70,7 +70,6 @@ import static com.github.dreamhead.moco.util.URLs.toUrlFunction;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.SET_COOKIE;
-import static java.lang.String.format;
 
 public final class Moco {
     public static HttpServer httpServer(final int port, final MocoConfig<?>... configs) {
@@ -681,7 +680,7 @@ public final class Moco {
 
     public static ResponseHandler attachment(final String filename, final Resource resource) {
         return AndResponseHandler.and(
-                with(header(HttpHeaders.CONTENT_DISPOSITION, format("attachment; filename=%s", checkNotNullOrEmpty(filename, "Filename should not be null or empty")))),
+                with(header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=%s".formatted(checkNotNullOrEmpty(filename, "Filename should not be null or empty")))),
                 with(checkNotNull(resource, "Resource should not be null")));
     }
 

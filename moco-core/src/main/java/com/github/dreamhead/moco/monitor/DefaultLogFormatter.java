@@ -30,17 +30,29 @@ public final class DefaultLogFormatter implements LogFormatter {
 
     @Override
     public String format(final Request request) {
-        return String.format("Request received:\n\n%s\n", findDumper(request, REQUEST_DUMPERS).dump(request));
+        return """
+               Request received:
+
+               %s
+               """.formatted(findDumper(request, REQUEST_DUMPERS).dump(request)).stripTrailing();
     }
 
     @Override
     public String format(final Response response) {
-        return String.format("Response return:\n\n%s\n", findDumper(response, RESPONSE_DUMPERS).dump(response));
+        return """
+               Response return:
+
+               %s
+               """.formatted(findDumper(response, RESPONSE_DUMPERS).dump(response)).stripTrailing();
     }
 
     @Override
     public String format(final Throwable e) {
-        return String.format("Exception thrown:\n\n%s\n", stackTraceToString(e));
+        return """
+               Exception thrown:
+
+               %s
+               """.formatted(stackTraceToString(e)).stripTrailing();
     }
 
     private String stackTraceToString(final Throwable e) {

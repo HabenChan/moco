@@ -3,8 +3,6 @@ package com.github.dreamhead.moco.extractor;
 import com.github.dreamhead.moco.RequestExtractor;
 import com.google.common.collect.ImmutableMap;
 
-import static java.lang.String.format;
-
 public final class Extractors {
     private static ImmutableMap<String, RequestExtractor<?>> extractors = ImmutableMap.<String, RequestExtractor<?>>builder()
             .put("file", new ContentRequestExtractor())
@@ -22,7 +20,7 @@ public final class Extractors {
             return extractors.get(id);
         }
 
-        throw new IllegalArgumentException(format("unknown extractor for [%s]", id));
+        throw new IllegalArgumentException("unknown extractor for [%s]".formatted(id));
     }
 
     private Extractors() {

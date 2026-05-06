@@ -1,7 +1,5 @@
 package com.github.dreamhead.moco.verification;
 
-import static java.lang.String.format;
-
 public final class BetweenVerification extends AbstractTimesVerification {
     private final int min;
     private final int max;
@@ -18,6 +16,6 @@ public final class BetweenVerification extends AbstractTimesVerification {
 
     @Override
     protected String expectedTip() {
-        return format("{%d, %d}", min, max);
+        return "{%d, %d}".formatted(min, max);
     }
 }

@@ -10,8 +10,6 @@ import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.Constructor;
 
-import static java.lang.String.format;
-
 public final class ResponseHandlers {
     private static final ImmutableMap<String, Class<?>> HANDLERS = ImmutableMap.<String, Class<?>>builder()
             .put("file", ContentHandler.class)
@@ -48,7 +46,7 @@ public final class ResponseHandlers {
             return createResponseHandler(resource);
         }
 
-        throw new IllegalArgumentException(format("unknown response handler for [%s]", resource.id()));
+        throw new IllegalArgumentException("unknown response handler for [%s]".formatted(resource.id()));
     }
 
     private static ResponseHandler createResponseHandler(final Resource resource) {

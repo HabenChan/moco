@@ -10,7 +10,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import static com.google.common.io.ByteStreams.toByteArray;
-import static java.lang.String.format;
 
 public final class ClasspathFileResourceReader extends AbstractFileResourceReader {
     public ClasspathFileResourceReader(final Resource filename, final Charset charset) {
@@ -21,7 +20,7 @@ public final class ClasspathFileResourceReader extends AbstractFileResourceReade
         String actualFilename = this.filename(request);
         URL resource = Resources.getResource(actualFilename);
         if (resource == null) {
-            throw new IllegalArgumentException(format("%s does not exist", actualFilename));
+            throw new IllegalArgumentException("%s does not exist".formatted(actualFilename));
         }
         try {
             return toByteArray(resource.openStream());

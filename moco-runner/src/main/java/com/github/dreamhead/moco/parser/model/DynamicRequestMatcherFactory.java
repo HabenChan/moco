@@ -185,7 +185,7 @@ public final class DynamicRequestMatcherFactory extends Dynamics implements Requ
             return not(exist(extractor));
         }
 
-        throw new IllegalArgumentException(String.format("Unknown exist parameter: [%s]", text));
+        throw new IllegalArgumentException("Unknown exist parameter: [%s]".formatted(text));
     }
 
     private static RequestMatcher wrapRequestMatcher(final RequestSetting request,
