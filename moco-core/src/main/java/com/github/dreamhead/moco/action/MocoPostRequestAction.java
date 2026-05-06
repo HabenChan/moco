@@ -1,20 +1,16 @@
 package com.github.dreamhead.moco.action;
 
 import com.github.dreamhead.moco.HttpHeader;
-import com.github.dreamhead.moco.HttpRequest;
 import com.github.dreamhead.moco.MocoConfig;
 import com.github.dreamhead.moco.MocoEventAction;
 import com.github.dreamhead.moco.Request;
 import com.github.dreamhead.moco.resource.ContentResource;
 import com.github.dreamhead.moco.resource.Resource;
 import com.google.common.net.MediaType;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.core5.http.ClassicHttpRequest;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.jspecify.annotations.NonNull;
 
-import java.nio.charset.Charset;
+import java.net.URI;
+import java.net.http.HttpRequest;
 
 public final class MocoPostRequestAction extends MocoRequestAction {
     private final ContentResource content;
@@ -25,20 +21,24 @@ public final class MocoPostRequestAction extends MocoRequestAction {
         this.content = content;
     }
 
-    protected ClassicHttpRequest createRequest(final String url, final Request request) {
-        HttpPost targetRequest = new HttpPost(url);
-        targetRequest.setEntity(asEntity(content, request));
-        return targetRequest;
+    @Override
+    protected HttpRequest.Builder createRequestBuilder(final String url, final Request request) {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .POST(HttpRequest.BodyPublishers.ofByteArray(content.readFor(request).getContent()));
+
+        builder.header("Content-Type", getContentType((com.github.dreamhead.moco.HttpRequest) request));
+
+        return builder;
     }
 
-    private HttpEntity asEntity(final ContentResource resource, final Request request) {
-        return new ByteArrayEntity(resource.readFor(request).getContent(), getContentType((HttpRequest) request));
-    }
-
-    private ContentType getContentType(final HttpRequest request) {
+    private @NonNull String getContentType(final com.github.dreamhead.moco.HttpRequest request) {
         MediaType type = content.getContentType(request);
-        return ContentType.create(type.type() + "/" + type.subtype(),
-                type.charset().or(Charset.defaultCharset()));
+        String contentTypeValue = type.type() + "/" + type.subtype();
+        if (type.charset().isPresent()) {
+            contentTypeValue = contentTypeValue + "; charset=" + type.charset().get();
+        }
+        return contentTypeValue;
     }
 
     @Override

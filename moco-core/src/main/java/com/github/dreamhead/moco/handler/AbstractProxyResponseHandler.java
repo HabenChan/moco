@@ -1,8 +1,6 @@
 package com.github.dreamhead.moco.handler;
 
 import com.github.dreamhead.moco.HttpProtocolVersion;
-import com.github.dreamhead.moco.HttpRequest;
-import com.github.dreamhead.moco.HttpResponse;
 import com.github.dreamhead.moco.MocoException;
 import com.github.dreamhead.moco.MutableHttpResponse;
 import com.github.dreamhead.moco.handler.failover.Failover;
@@ -16,52 +14,35 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringEncoder;
-import org.apache.hc.client5.http.ClientProtocolException;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
-import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.URIScheme;
-import org.apache.hc.core5.http.config.RegistryBuilder;
-import org.apache.hc.core5.http.io.entity.InputStreamEntity;
-import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.apache.hc.core5.ssl.TrustStrategy;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.dreamhead.moco.util.URLs.toUrl;
 import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
@@ -73,51 +54,23 @@ import static com.google.common.net.HttpHeaders.HOST;
 import static com.google.common.net.HttpHeaders.SERVER;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static org.apache.hc.core5.http.io.entity.EntityUtils.toByteArray;
 
+/**
+ * Proxy response handler using Java 17's native HttpClient.
+ * Note: This implementation does not support HTTP/1.0, only HTTP/1.1 and HTTP/2.
+ */
 public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseHandler {
 
     private static final ImmutableSet<String> IGNORED_REQUEST_HEADERS = ImmutableSet.of(
-            HOST.toUpperCase(), CONTENT_LENGTH.toUpperCase());
+            HOST.toUpperCase(),
+            CONTENT_LENGTH.toUpperCase(),
+            "CONNECTION",
+            "EXPECT",
+            "UPGRADE");
     private static final ImmutableSet<String> IGNORED_RESPONSE_HEADERS = ImmutableSet.of(
             DATE.toUpperCase(), SERVER.toUpperCase());
 
-    private CloseableHttpClient createClient() {
-        // Try to ignore SSL certification
-        // https://memorynotfound.com/ignore-certificate-errors-apache-httpclient/
-        try {
-
-            SSLContext sslContext = SSLContextBuilder.create()
-                    .loadTrustMaterial(new TrustStrategy() {
-                        @Override
-                        public boolean isTrusted(java.security.cert.X509Certificate[] chain, String authType) {
-                            return true; // Trust all certificates
-                        }
-                    })
-                    .build();
-
-            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
-            SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
-
-            RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register(URIScheme.HTTP.id, PlainConnectionSocketFactory.getSocketFactory())
-                    .register(URIScheme.HTTPS.id, connectionFactory)
-                    .build();
-
-            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-
-            return HttpClients.custom()
-                    .setConnectionManager(connManager)
-                    .setConnectionManagerShared(true)
-                    .build();
-        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            throw new MocoException(e);
-        }
-    }
-
-    protected abstract Optional<String> doRemoteUrl(HttpRequest request);
-
-    private static Logger logger = LoggerFactory.getLogger(AbstractProxyResponseHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractProxyResponseHandler.class);
 
     private final Failover failover;
 
@@ -125,95 +78,61 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         this.failover = failover;
     }
 
-    private HttpUriRequestBase prepareRemoteRequest(final FullHttpRequest request, final URL url) {
-        HttpUriRequestBase remoteRequest = createRemoteRequest(request, url);
-        remoteRequest.setConfig(createRequestConfig());
+    private HttpClient createClient() {
+        try {
+            // Create SSL context that trusts all certificates
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[]{
+                new TrustAllX509TrustManager()
+            }, new SecureRandom());
 
-        long contentLength = HttpUtil.getContentLength(request, -1);
-        if (contentLength > 0) {
-            remoteRequest.setEntity(createEntity(request.content(), contentLength));
+            return HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .sslContext(sslContext)
+                    .connectTimeout(Duration.ofSeconds(30))
+                    .followRedirects(HttpClient.Redirect.NEVER)
+                    .build();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new MocoException(e);
+        }
+    }
+
+    protected abstract Optional<String> doRemoteUrl(com.github.dreamhead.moco.HttpRequest request);
+
+    private HttpRequest.BodyPublisher bodyPublisher(final ByteBuf content) {
+        if (content == null || !content.isReadable()) {
+            return HttpRequest.BodyPublishers.noBody();
         }
 
-        return remoteRequest;
+        byte[] bytes = new byte[content.readableBytes()];
+        content.readBytes(bytes);
+        return HttpRequest.BodyPublishers.ofByteArray(bytes);
     }
 
-    private RequestConfig createRequestConfig() {
-        return RequestConfig.custom()
-                .setRedirectsEnabled(false)
-                .setResponseTimeout(0, TimeUnit.SECONDS)
-//                .setSocketTimeout(0)
-//                .setStaleConnectionCheckEnabled(true)
-                .build();
-    }
+    private HttpRequest createRemoteRequest(final FullHttpRequest request, final URL url) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(url.toURI())
+                    .method(request.method().name(), bodyPublisher(request.content()));
 
-    private HttpUriRequestBase createRemoteRequest(final FullHttpRequest request, final URL url) {
-        HttpUriRequestBase remoteRequest = createBaseRequest(url, request.method());
-
-        remoteRequest.setVersion(createVersion(request));
-        for (Map.Entry<String, String> entry : request.headers()) {
-            if (isRequestHeader(entry)) {
-                remoteRequest.addHeader(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, String> entry : request.headers()) {
+                if (isRequestHeader(entry)) {
+                    builder.header(entry.getKey(), entry.getValue());
+                }
             }
+
+            return builder.build();
+        } catch (URISyntaxException e) {
+            throw new MocoException(e);
         }
-
-        return remoteRequest;
-    }
-
-    private HttpEntity createEntity(final ByteBuf content, final long contentLength) {
-        return new InputStreamEntity(new ByteBufInputStream(content), contentLength, null);
-    }
-
-    private org.apache.hc.core5.http.HttpVersion createVersion(final FullHttpRequest request) {
-        HttpVersion protocolVersion = request.protocolVersion();
-        return new org.apache.hc.core5.http.HttpVersion(protocolVersion.majorVersion(), protocolVersion.minorVersion());
     }
 
     private boolean isRequestHeader(final Map.Entry<String, String> entry) {
         return !IGNORED_REQUEST_HEADERS.contains(entry.getKey().toUpperCase());
     }
 
-    private boolean isResponseHeader(final Header header) {
-        return !IGNORED_RESPONSE_HEADERS.contains(header.getName().toUpperCase());
-    }
-
-    private HttpUriRequestBase createBaseRequest(final URL url, final HttpMethod method) {
-        try {
-            return new HttpUriRequestBase(method.name(), url.toURI());
-        } catch (URISyntaxException e) {
-            throw new MocoException(e);
-        }
-    }
-
-    private void setupResponse(final HttpRequest request,
-                                final ClassicHttpResponse remoteResponse,
-                                final CloseableHttpClient client,
-                                final MutableHttpResponse httpResponse) throws IOException {
-        if (failover.shouldFailover(remoteResponse)) {
-            closeQuietly(remoteResponse);
-            closeQuietly(client);
-            writeResponseFromFailover(failover.failover(request), httpResponse);
-            return;
-        }
-
-        if (isSseResponse(remoteResponse)) {
-            writeSseResponse(request, remoteResponse, client, httpResponse);
-            return;
-        }
-
-        HttpResponse normalResponse = toHttpResponse(remoteResponse);
-        failover.onCompleteResponse(request, normalResponse);
-        closeQuietly(remoteResponse);
-        closeQuietly(client);
-        writeNormalResponse(normalResponse, httpResponse);
-    }
-
-    private void writeResponseFromFailover(final HttpResponse response, final MutableHttpResponse httpResponse) {
-        if (response.getSseEvents() != null) {
-            writeSseEvents(response.getSseEvents(), httpResponse);
-            return;
-        }
-
-        writeNormalResponse(response, httpResponse);
+    private boolean isResponseHeader(final String name) {
+        return !IGNORED_RESPONSE_HEADERS.contains(name.toUpperCase());
     }
 
     private void writeSseEvents(final Iterable<SseEvent> events, final MutableHttpResponse httpResponse) {
@@ -224,68 +143,38 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         httpResponse.setSseEvents(events);
     }
 
-    private void writeSseResponse(final HttpRequest request,
-                                   final ClassicHttpResponse remoteResponse,
-                                   final CloseableHttpClient client,
-                                   final MutableHttpResponse httpResponse) throws IOException {
-        ReaderLineIterator lineIterator = new ReaderLineIterator(
-                new InputStreamReader(remoteResponse.getEntity().getContent(), StandardCharsets.UTF_8));
-        Iterable<String> lines = () -> lineIterator;
-        Iterable<SseEvent> events = new SseEventParser().parse(lines);
+    private com.github.dreamhead.moco.HttpResponse toHttpResponse(final HttpResponse<InputStream> response) throws IOException {
+        HttpProtocolVersion version = parseVersion(response.version());
+        int status = response.statusCode();
 
-        Closeable closeable = () -> {
-            closeQuietly(remoteResponse);
-            closeQuietly(client);
-        };
-
-        SseEventConsumer consumer = getSseEventConsumer(request, remoteResponse);
-
-        writeSseEvents(new SseEventStreamIterable(events, closeable, consumer), httpResponse);
-    }
-
-    private @Nullable SseEventConsumer getSseEventConsumer(final HttpRequest request,
-                                                           final ClassicHttpResponse remoteResponse) {
-        if (failover.hasFailover())
-                return collected -> recordSseFailover(request, remoteResponse, collected);
-
-        return null;
-    }
-
-    private void recordSseFailover(final HttpRequest request,
-                                    final ClassicHttpResponse remoteResponse,
-                                    final ImmutableList<SseEvent> collected) {
-        HttpResponse response = DefaultHttpResponse.builder()
-                .withVersion(HttpProtocolVersion.versionOf(remoteResponse.getVersion().toString()))
-                .withStatus(remoteResponse.getCode())
-                .withSseEvents(collected)
-                .build();
-        failover.onCompleteResponse(request, response);
-    }
-
-    private HttpResponse toHttpResponse(final ClassicHttpResponse remoteResponse) throws IOException {
-        HttpProtocolVersion version = HttpProtocolVersion.versionOf(remoteResponse.getVersion().toString());
-        int status = remoteResponse.getCode();
-
-        Map<String, String[]> headers = new HashMap<>();
-        Arrays.stream(remoteResponse.getHeaders())
-                .filter(this::isResponseHeader)
-                .forEach(header -> mergeHeader(headers, header.getName(), header.getValue()));
-
-        HttpEntity entity = remoteResponse.getEntity();
-        MessageContent content = null;
-        if (entity != null) {
-            byte[] bytes = toByteArray(entity);
-            if (bytes.length > 0) {
-                content = MessageContent.content().withContent(bytes).build();
-            }
-        }
+        Map<String, String[]> headers = extractResponseHeaders(response);
+        byte[] content = readResponseContent(response.body());
+        MessageContent messageContent = content.length > 0 ? MessageContent.content().withContent(content).build() : null;
 
         return DefaultHttpResponse.builder()
                 .withVersion(version)
                 .withStatus(status)
                 .withHeaders(headers)
-                .withContent(content)
+                .withContent(messageContent)
                 .build();
+    }
+
+    private Map<String, String[]> extractResponseHeaders(final HttpResponse<InputStream> response) {
+        Map<String, String[]> headers = new HashMap<>();
+        response.headers().map().entrySet().stream()
+                .filter(header -> isResponseHeader(header.getKey()))
+                .forEach(header -> {
+                    for (String value : header.getValue()) {
+                        mergeHeader(headers, header.getKey(), value);
+                    }
+                });
+        return headers;
+    }
+
+    private byte[] readResponseContent(final InputStream body) throws IOException {
+        try (body) {
+            return body.readAllBytes();
+        }
     }
 
     private void mergeHeader(final Map<String, String[]> headers, final String name, final String value) {
@@ -297,13 +186,22 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         }
     }
 
+    private static HttpProtocolVersion parseVersion(final HttpClient.Version version) {
+        if (version == HttpClient.Version.HTTP_1_1) {
+            return HttpProtocolVersion.VERSION_1_1;
+        } else if (version == HttpClient.Version.HTTP_2) {
+            return HttpProtocolVersion.VERSION_2_0;
+        }
+        return HttpProtocolVersion.VERSION_1_1;  // Default fallback
+    }
+
     @Override
-    protected final void doWriteToResponse(final HttpRequest httpRequest, final MutableHttpResponse httpResponse) {
+    protected final void doWriteToResponse(final com.github.dreamhead.moco.HttpRequest httpRequest, final MutableHttpResponse httpResponse) {
         Optional<URL> url = remoteUrl(httpRequest);
         url.ifPresent(actual -> doProxy(httpRequest, actual, httpResponse));
     }
 
-    private void writeNormalResponse(final HttpResponse response, final MutableHttpResponse httpResponse) {
+    private void writeNormalResponse(final com.github.dreamhead.moco.HttpResponse response, final MutableHttpResponse httpResponse) {
         httpResponse.setVersion(response.getVersion());
         httpResponse.setStatus(response.getStatus());
         for (Map.Entry<String, String[]> entry : response.getHeaders().entrySet()) {
@@ -316,7 +214,7 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         httpResponse.setContent(response.getContent());
     }
 
-    private void doProxy(final HttpRequest request, final URL remoteUrl, final MutableHttpResponse httpResponse) {
+    private void doProxy(final com.github.dreamhead.moco.HttpRequest request, final URL remoteUrl, final MutableHttpResponse httpResponse) {
         if (failover.isPlayback()) {
             try {
                 writeResponseFromFailover(failover.failover(request), httpResponse);
@@ -328,46 +226,93 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         doForward(request, remoteUrl, httpResponse);
     }
 
-    private void doForward(final HttpRequest request, final URL remoteUrl, final MutableHttpResponse httpResponse) {
-        CloseableHttpClient client = createClient();
-        CloseableHttpResponse remoteResponse = null;
+    private void doForward(final com.github.dreamhead.moco.HttpRequest request, final URL remoteUrl, final MutableHttpResponse httpResponse) {
+        HttpClient client = createClient();
         try {
-            HttpUriRequestBase remoteRequest = prepareRemoteRequest(request, remoteUrl);
-            remoteResponse = client.execute(remoteRequest);
-            setupResponse(request, remoteResponse, client, httpResponse);
-        } catch (ClientProtocolException e) {
-            closeQuietly(remoteResponse);
-            closeQuietly(client);
-            logger.error("Failed to create remote request", e);
-            throw new MocoException(e);
+            FullHttpRequest httpRequest = ((DefaultHttpRequest) request).toFullHttpRequest();
+            HttpRequest remoteRequest = createRemoteRequest(httpRequest, remoteUrl);
+            HttpResponse<InputStream> response = client.send(remoteRequest,
+                    HttpResponse.BodyHandlers.ofInputStream());
+
+            writeResponse(request, response, httpResponse);
         } catch (IOException e) {
-            closeQuietly(remoteResponse);
-            closeQuietly(client);
             logger.error("Failed to load remote and try to failover", e);
             writeResponseFromFailover(failover.failover(request), httpResponse);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Request interrupted", e);
+            throw new MocoException(e);
         }
     }
 
-    private void closeQuietly(final Closeable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (IOException ignored) {
-            }
+    private void writeResponse(final com.github.dreamhead.moco.HttpRequest request,
+                               final HttpResponse<InputStream> response,
+                               final MutableHttpResponse httpResponse) throws IOException {
+        if (failover.shouldFailover(response.statusCode())) {
+            response.body().close();
+            writeResponseFromFailover(failover.failover(request), httpResponse);
+            return;
         }
+
+        if (isSseResponse(response)) {
+            writeSseResponse(request, response, httpResponse);
+            return;
+        }
+
+        com.github.dreamhead.moco.HttpResponse normalResponse = toHttpResponse(response);
+        failover.onCompleteResponse(request, normalResponse);
+        writeNormalResponse(normalResponse, httpResponse);
     }
 
-    private HttpUriRequestBase prepareRemoteRequest(final HttpRequest request, final URL remoteUrl) {
-        FullHttpRequest httpRequest = ((DefaultHttpRequest) request).toFullHttpRequest();
-        return prepareRemoteRequest(httpRequest, remoteUrl);
+    private boolean isSseResponse(final HttpResponse<?> response) {
+        return response.headers().firstValue("Content-Type")
+                .map(ct -> ct.contains("text/event-stream"))
+                .orElse(false);
     }
 
-    private Optional<URL> remoteUrl(final HttpRequest request) {
+    private void writeSseResponse(final com.github.dreamhead.moco.HttpRequest request,
+                                    final HttpResponse<InputStream> streamingResponse,
+                                    final MutableHttpResponse httpResponse) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(streamingResponse.body(), StandardCharsets.UTF_8));
+        ReaderLineIterator lineIterator = new ReaderLineIterator(reader);
+        Iterable<String> lines = () -> lineIterator;
+        Iterable<SseEvent> events = new SseEventParser().parse(lines);
+
+        SseEventConsumer consumer = getSseEventConsumer(request, streamingResponse);
+
+        writeSseEvents(new SseEventStreamIterable(events, reader, consumer), httpResponse);
+    }
+
+    private SseEventConsumer getSseEventConsumer(final com.github.dreamhead.moco.HttpRequest request,
+                                                      final HttpResponse<InputStream> response) {
+        if (failover.hasFailover()) {
+            return collected -> {
+                com.github.dreamhead.moco.HttpResponse mocoResponse = DefaultHttpResponse.builder()
+                        .withVersion(parseVersion(response.version()))
+                        .withStatus(response.statusCode())
+                        .withSseEvents(collected)
+                        .build();
+                failover.onCompleteResponse(request, mocoResponse);
+            };
+        }
+        return null;
+    }
+
+    private void writeResponseFromFailover(final com.github.dreamhead.moco.HttpResponse response, final MutableHttpResponse httpResponse) {
+        if (response.getSseEvents() != null) {
+            writeSseEvents(response.getSseEvents(), httpResponse);
+            return;
+        }
+
+        writeNormalResponse(response, httpResponse);
+    }
+
+    private Optional<URL> remoteUrl(final com.github.dreamhead.moco.HttpRequest request) {
         Optional<String> remoteUrl = this.doRemoteUrl(request);
         return remoteUrl.flatMap(actual -> doGetRemoteUrl(request, actual));
     }
 
-    private Optional<URL> doGetRemoteUrl(final HttpRequest request, final String actual) {
+    private Optional<URL> doGetRemoteUrl(final com.github.dreamhead.moco.HttpRequest request, final String actual) {
         try {
             return of(toUrl(getQueryStringEncoder(request, actual).toString()));
         } catch (IllegalArgumentException e) {
@@ -375,7 +320,7 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         }
     }
 
-    private QueryStringEncoder getQueryStringEncoder(final HttpRequest request, final String actual) {
+    private QueryStringEncoder getQueryStringEncoder(final com.github.dreamhead.moco.HttpRequest request, final String actual) {
         QueryStringEncoder encoder = new QueryStringEncoder(actual);
         for (Map.Entry<String, String[]> entry : request.getQueries().entrySet()) {
             for (String value : entry.getValue()) {
@@ -390,9 +335,20 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         return failover;
     }
 
-    private boolean isSseResponse(final ClassicHttpResponse remoteResponse) {
-        Header contentType = remoteResponse.getFirstHeader("Content-Type");
-        return contentType != null && contentType.getValue().contains("text/event-stream");
+    // Inner classes
+    private static class TrustAllX509TrustManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
     }
 
     @FunctionalInterface
@@ -415,13 +371,13 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
         }
 
         @Override
-        public Iterator<SseEvent> iterator() {
+        public @NonNull Iterator<SseEvent> iterator() {
             if (iterated) {
                 throw new IllegalStateException("SSE events can only be iterated once");
             }
             iterated = true;
-            return new Iterator<SseEvent>() {
-                private final Iterator<SseEvent> delegate = events.iterator();
+            return new Iterator<>() {
+                private final java.util.Iterator<SseEvent> delegate = events.iterator();
                 private final ImmutableList.Builder<SseEvent> collected = ImmutableList.builder();
                 private boolean closed;
 
@@ -454,6 +410,12 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
                         return;
                     }
                     closed = true;
+                    if (onEvent != null) {
+                        ImmutableList<SseEvent> collectedEvents = collected.build();
+                        if (!collectedEvents.isEmpty()) {
+                            onEvent.accept(collectedEvents);
+                        }
+                    }
                     try {
                         closeable.close();
                     } catch (IOException ignored) {

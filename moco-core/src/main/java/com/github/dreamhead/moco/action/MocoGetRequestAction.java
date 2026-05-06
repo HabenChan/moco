@@ -5,16 +5,20 @@ import com.github.dreamhead.moco.MocoConfig;
 import com.github.dreamhead.moco.MocoEventAction;
 import com.github.dreamhead.moco.Request;
 import com.github.dreamhead.moco.resource.Resource;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.core5.http.ClassicHttpRequest;
+
+import java.net.URI;
+import java.net.http.HttpRequest;
 
 public final class MocoGetRequestAction extends MocoRequestAction {
     public MocoGetRequestAction(final Resource url, final HttpHeader[] headers) {
         super(url, headers);
     }
 
-    protected ClassicHttpRequest createRequest(final String url, final Request request) {
-        return new HttpGet(url);
+    @Override
+    protected HttpRequest.Builder createRequestBuilder(final String url, final Request request) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET();
     }
 
     @Override

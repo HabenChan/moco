@@ -1,14 +1,14 @@
 package com.github.dreamhead.moco;
 
+import com.github.dreamhead.moco.helper.SseTestHelper;
+import com.github.dreamhead.moco.sse.SseEvent;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
-import java.net.URI;
 import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.ContentResponseHandler;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpVersion;
 import org.apache.hc.core5.http.Method;
@@ -16,20 +16,16 @@ import org.hamcrest.Matcher;
 import org.hamcrest.core.SubstringMatcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-
-import com.github.dreamhead.moco.helper.SseTestHelper;
-import com.github.dreamhead.moco.sse.SseEvent;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.EnumSource.Mode;
 
-import static com.github.dreamhead.moco.HttpProtocolVersion.VERSION_0_9;
-import static com.github.dreamhead.moco.HttpProtocolVersion.VERSION_1_0;
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+
 import static com.github.dreamhead.moco.HttpProtocolVersion.VERSION_1_1;
 import static com.github.dreamhead.moco.Moco.and;
 import static com.github.dreamhead.moco.Moco.by;
@@ -52,13 +48,13 @@ import static com.github.dreamhead.moco.Moco.seq;
 import static com.github.dreamhead.moco.Moco.status;
 import static com.github.dreamhead.moco.Moco.template;
 import static com.github.dreamhead.moco.Moco.text;
-import static com.github.dreamhead.moco.MocoSse.sse;
-import static com.github.dreamhead.moco.MocoSse.event;
 import static com.github.dreamhead.moco.Moco.uri;
 import static com.github.dreamhead.moco.Moco.version;
 import static com.github.dreamhead.moco.Moco.with;
 import static com.github.dreamhead.moco.MocoRequestHit.once;
 import static com.github.dreamhead.moco.MocoRequestHit.requestHit;
+import static com.github.dreamhead.moco.MocoSse.event;
+import static com.github.dreamhead.moco.MocoSse.sse;
 import static com.github.dreamhead.moco.Runner.running;
 import static com.github.dreamhead.moco.helper.RemoteTestUtils.port;
 import static com.github.dreamhead.moco.helper.RemoteTestUtils.remoteUrl;
@@ -71,7 +67,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MocoProxyTest extends AbstractMocoHttpTest {
@@ -143,35 +138,25 @@ public class MocoProxyTest extends AbstractMocoHttpTest {
 
     @Test
     public void should_proxy_with_request_version() throws Exception {
-        server.request(and(by(uri("/target")), by(version(VERSION_1_0)))).response("1.0");
         server.request(and(by(uri("/target")), by(version(VERSION_1_1)))).response("1.1");
         server.request(by(uri("/proxy"))).response(proxy(remoteUrl("/target")));
 
         running(server, () -> {
-            assertThat(helper.getWithVersion(remoteUrl("/proxy"), HttpVersion.HTTP_1_0), is("1.0"));
             assertThat(helper.getWithVersion(remoteUrl("/proxy"), HttpVersion.HTTP_1_1), is("1.1"));
+            // Only 1.1 request can be forwarded
+            assertThat(helper.getWithVersion(remoteUrl("/proxy"), HttpVersion.HTTP_1_0), is("1.1"));
         });
     }
 
     @Test
     public void should_proxy_with_response_version() throws Exception {
-        server.request(and(by(uri("/target")), by(version(VERSION_1_0)))).response(version(VERSION_1_0));
         server.request(and(by(uri("/target")), by(version(VERSION_1_1)))).response(version(VERSION_1_1));
-        server.request(and(by(uri("/target")), by(version(VERSION_0_9)))).response(version(VERSION_1_0));
         server.request(by(uri("/proxy"))).response(proxy(remoteUrl("/target")));
 
         running(server, () -> {
-            HttpResponse response10 = helper.execute(Request.get(remoteUrl("/proxy"))
-                    .version(HttpVersion.HTTP_1_0));
-            assertThat(response10.getVersion().toString(), is(HttpVersion.HTTP_1_0.toString()));
-
             HttpResponse response11 = helper.execute(Request.get(remoteUrl("/proxy"))
                     .version(HttpVersion.HTTP_1_1));
             assertThat(response11.getVersion().toString(), is(HttpVersion.HTTP_1_1.toString()));
-
-            HttpResponse response09 = helper.execute(Request.get(remoteUrl("/proxy"))
-                    .version(HttpVersion.HTTP_0_9));
-            assertThat(response09.getVersion().toString(), is(HttpVersion.HTTP_1_0.toString()));
         });
     }
 

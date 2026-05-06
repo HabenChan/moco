@@ -1,9 +1,9 @@
 package com.github.dreamhead.moco;
 
-import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.annotation.JsonSerialize;
 import com.github.dreamhead.moco.dumper.HttpProtocolVersionDeserializer;
 import com.github.dreamhead.moco.dumper.HttpProtocolVersionSerializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Arrays;
 
@@ -12,7 +12,8 @@ import java.util.Arrays;
 public enum HttpProtocolVersion {
     VERSION_0_9("HTTP/0.9"),
     VERSION_1_0("HTTP/1.0"),
-    VERSION_1_1("HTTP/1.1");
+    VERSION_1_1("HTTP/1.1"),
+    VERSION_2_0("HTTP/2.0");
 
     private final String text;
 

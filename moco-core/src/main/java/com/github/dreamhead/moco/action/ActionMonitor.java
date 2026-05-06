@@ -10,26 +10,18 @@ import com.github.dreamhead.moco.dumper.HttpResponseDumper;
 import com.github.dreamhead.moco.model.DefaultHttpRequest;
 import com.github.dreamhead.moco.model.DefaultHttpResponse;
 import com.github.dreamhead.moco.model.MessageContent;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.hc.core5.http.ClassicHttpRequest;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.http.ProtocolVersion;
-import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ActionMonitor {
     private static Logger logger = LoggerFactory.getLogger(ActionMonitor.class);
@@ -37,80 +29,64 @@ public class ActionMonitor {
     private final Dumper<Request> requestDumper = new HttpRequestDumper();
 
     private String toPath(final URI uri) {
-        final String path = uri.toString();
-        final int index = path.indexOf("?");
-        if (index >= 0) {
-            return path.substring(0, index);
+        final String path = uri.getPath();
+        return path != null ? path : "/";
+    }
+
+    private Map<String, String[]> asQueries(final String query) {
+        if (query == null || query.isEmpty()) {
+            return Map.of();
         }
 
-        return path;
+        Multimap<String, String> multimap = ArrayListMultimap.create();
+        for (String param : query.split("&")) {
+            String[] keyValue = param.split("=", 2);
+            if (keyValue.length == 2) {
+                multimap.put(keyValue[0], java.net.URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8));
+            } else if (keyValue.length == 1) {
+                multimap.put(keyValue[0], "");
+            }
+        }
+
+        Map<String, String[]> result = new HashMap<>();
+        for (Map.Entry<String, Collection<String>> entry : multimap.asMap().entrySet()) {
+            result.put(entry.getKey(), entry.getValue().toArray(new String[0]));
+        }
+
+        return result;
     }
 
-    private Map<String, String[]> asQueries(final List<NameValuePair> queries) {
-        final Multimap<String, String> multimap = queries.stream()
-                .collect(ImmutableListMultimap.toImmutableListMultimap(
-                        NameValuePair::getName, NameValuePair::getValue));
-
-        return multimap.asMap()
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toArray(new String[0])));
-    }
-
-    private static Map<String, Iterable<String>> asHeaders(final Header[] httpHeaders) {
+    private static Map<String, Iterable<String>> asHeaders(final java.net.http.HttpHeaders httpHeaders) {
         Map<String, Iterable<String>> headers = new HashMap<>();
-        for (Header header : httpHeaders) {
-            String key = header.getName();
-            List<String> values = getValues(headers, key);
-            values.add(header.getValue());
-            headers.put(key, values);
-        }
-
+        httpHeaders.map().forEach((key, values) -> headers.put(key, values));
         return headers;
     }
 
-    private static List<String> getValues(final Map<String, Iterable<String>> headers, final String key) {
-        if (headers.containsKey(key)) {
-            return (List<String>) headers.get(key);
+    public final void postAction(final HttpResponse<byte[]> response) {
+        final DefaultHttpResponse.Builder builder = DefaultHttpResponse.builder()
+                .withVersion(HttpProtocolVersion.VERSION_1_1)
+                .withStatus(response.statusCode())
+                .withHeaders(asHeaders(response.headers()));
+
+        byte[] content = response.body();
+        if (content != null && content.length > 0) {
+            builder.withContent(MessageContent.content().withContent(content).build());
         }
 
-        return new ArrayList<>();
+        logger.info("Action Response: {}\n", responseDumper.dump(builder.build()));
     }
 
-    public final void postAction(final ClassicHttpResponse response) throws IOException {
-        final DefaultHttpResponse dumped = DefaultHttpResponse.builder()
-                .withVersion(getVersion(response.getVersion()))
-                .withStatus(response.getCode())
-                .withHeaders(asHeaders(response.getHeaders()))
-                .withContent(MessageContent.content().withContent(response.getEntity().getContent()).build())
-                .build();
-        logger.info("Action Response: {}\n", responseDumper.dump(dumped));
-    }
-
-    public final void preAction(final ClassicHttpRequest request) throws URISyntaxException, IOException {
-        final URIBuilder uriBuilder = new URIBuilder(request.getUri());
+    public final void preAction(final HttpRequest request) {
+        final URI uri = request.uri();
         final DefaultHttpRequest.Builder builder = DefaultHttpRequest.builder()
-                .withVersion(getVersion(request.getVersion()))
-                .withUri(toPath(request.getUri()))
-                .withQueries(asQueries(uriBuilder.getQueryParams()))
-                .withMethod(HttpMethod.valueOf(request.getMethod().toUpperCase()))
-                .withHeaders(asHeaders(request.getHeaders()));
+                .withVersion(HttpProtocolVersion.VERSION_1_1)
+                .withUri(toPath(uri))
+                .withQueries(asQueries(uri.getQuery()))
+                .withMethod(HttpMethod.valueOf(request.method().toUpperCase()))
+                .withHeaders(asHeaders(request.headers()));
 
-        final HttpEntity entity = request.getEntity();
-        if (entity != null) {
-            builder.withContent(MessageContent.content()
-                    .withContent(entity.getContent())
-                    .build());
-        }
-
+        // HttpRequest.BodyPublisher body is not directly accessible
+        // Skip content logging for now as it's complex to extract from BodyPublisher
         logger.info("Action Request:{}\n", requestDumper.dump(builder.build()));
-    }
-
-    private static HttpProtocolVersion getVersion(final ProtocolVersion version) {
-        if (version == null) {
-            return HttpProtocolVersion.VERSION_1_1;
-        }
-
-        return HttpProtocolVersion.versionOf(version.toString());
     }
 }
