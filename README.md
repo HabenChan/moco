@@ -14,6 +14,8 @@ Moco is an easy setup stub framework.
 * [![Maven Central](https://img.shields.io/maven-central/v/com.github.dreamhead/moco-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.github.dreamhead/moco-core)
 * [Release Notes](moco-doc/ReleaseNotes.md)
 
+**Note:** Moco 2.0.0 requires Java 17 or later.
+
 ## User Voice
 * [Let me know](https://jinshuju.net/f/Agawf9) if you are using Moco.
 * Join Moco [mailing list](https://groups.google.com/forum/#!forum/moco-stub) to discuss.
@@ -51,12 +53,13 @@ java -jar moco-runner-<version>-standalone.jar http -p 12306 -c foo.json
 * Detailed [REST API](moco-doc/rest-apis.md)
 * Detailed [Websocket API](moco-doc/websocket-apis.md)
 * Detailed [SSE API](moco-doc/sse-apis.md)
+* Detailed [HTTP/2 API](moco-doc/http2-api.md)
 * [Global Settings](moco-doc/global-settings.md) for multiple configuration files.
 * [Command Line Usages](moco-doc/cmd.md)
 * [Extend Moco](moco-doc/extending.md) if current API does not meet your requirement.
 
 ## Build
-Make sure you have JDK and Gradle installed.
+**Requirements:** JDK 17+ and Gradle
 
 * Clone Moco
 

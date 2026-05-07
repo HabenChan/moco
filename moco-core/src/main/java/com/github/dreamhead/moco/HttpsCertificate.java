@@ -31,6 +31,18 @@ public final class HttpsCertificate {
         return createServerContext().createSSLEngine();
     }
 
+    public char[] getKeyStorePassword() {
+        return keyStorePassword.toCharArray();
+    }
+
+    public char[] getCertPassword() {
+        return certPassword.toCharArray();
+    }
+
+    public ContentResource getResource() {
+        return resource;
+    }
+
     private SSLContext createServerContext() {
         InputStream is = this.getKeyStore();
         try {
@@ -61,14 +73,6 @@ public final class HttpsCertificate {
     private InputStream getKeyStore() {
         MessageContent messageContent = resource.readFor((Request) null);
         return messageContent.toInputStream();
-    }
-
-    private char[] getKeyStorePassword() {
-        return keyStorePassword.toCharArray();
-    }
-
-    private char[] getCertPassword() {
-        return certPassword.toCharArray();
     }
 
     public static HttpsCertificate certificate(final ContentResource resource,

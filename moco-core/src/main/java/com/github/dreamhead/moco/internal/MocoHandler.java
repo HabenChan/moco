@@ -33,13 +33,15 @@ import static io.netty.handler.codec.http.HttpUtil.setKeepAlive;
 @Sharable
 public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
     private final ActualHttpServer server;
-    private final HttpHandler httpHandler;
+    private final RequestHandler requestHandler;
     private final WebSocketHandler websocketHandler;
+    private final SseStreamer sseStreamer;
 
     public MocoHandler(final ActualHttpServer server) {
         this.server = server;
-        this.httpHandler = new HttpHandler(server);
+        this.requestHandler = new RequestHandler(server);
         this.websocketHandler = new WebSocketHandler(server.getWebsocketServer());
+        this.sseStreamer = new SseStreamer(server);
     }
 
     @Override
@@ -70,9 +72,8 @@ public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-        Client client = new Client(address);
-        DefaultMutableHttpResponse httpResponse = httpHandler.handleRequest(request, client);
+        Client client = requestHandler.createClient(ctx);
+        DefaultMutableHttpResponse httpResponse = requestHandler.handleRequest(request, client);
 
         if (httpResponse.isSse()) {
             streamSseResponse(ctx, httpResponse);
@@ -102,43 +103,22 @@ public final class MocoHandler extends SimpleChannelInboundHandler<Object> {
 
     private void streamSseEvents(final ChannelHandlerContext ctx,
                                  final Iterator<SseEvent> events) {
-        try {
-            if (!ctx.channel().isActive() || !events.hasNext()) {
-                finishSseStream(ctx);
-                return;
+        sseStreamer.streamEvents(ctx, events, new SseStreamer.SseEventWriter() {
+            @Override
+            public void writeEvent(final ChannelHandlerContext c, final SseEvent event) {
+                c.writeAndFlush(new DefaultHttpContent(
+                        Unpooled.copiedBuffer(event.toEventString(), StandardCharsets.UTF_8)
+                ));
             }
 
-            SseEvent event = events.next();
-            long delay = event.delay();
-
-            if (delay > 0) {
-                ctx.executor().schedule(
-                        () -> {
-                            writeSseEvent(ctx, event);
-                            streamSseEvents(ctx, events);
-                        },
-                        delay, TimeUnit.MILLISECONDS);
-            } else {
-                writeSseEvent(ctx, event);
-                streamSseEvents(ctx, events);
+            @Override
+            public void finishStream(final ChannelHandlerContext c) {
+                if (c.channel().isActive()) {
+                    c.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+                     .addListener(ChannelFutureListener.CLOSE);
+                }
             }
-        } catch (Exception e) {
-            server.onException(e);
-        }
-    }
-
-    private void writeSseEvent(ChannelHandlerContext ctx, SseEvent event) {
-        server.onEvent(event);
-        ctx.writeAndFlush(new DefaultHttpContent(
-                Unpooled.copiedBuffer(event.toEventString(), StandardCharsets.UTF_8)
-        ));
-    }
-
-    private void finishSseStream(final ChannelHandlerContext ctx) {
-        if (ctx.channel().isActive()) {
-            ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-               .addListener(ChannelFutureListener.CLOSE);
-        }
+        });
     }
 
     private boolean upgradeWebsocket(final FullHttpRequest request) {

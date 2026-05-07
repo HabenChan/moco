@@ -38,7 +38,7 @@ subprojects {
         apply plugin: 'com.vanniktech.maven.publish'
     }
     group = 'com.github.dreamhead'
-    version = '1.6.2-SNAPSHOT'
+    version = '2.0.0-SNAPSHOT'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -100,6 +100,7 @@ subprojects {
         implementation(
                 "com.google.guava:guava:$guavaVersion",
                 "io.netty:netty-codec-http:$nettyVersion",
+                "io.netty:netty-codec-http2:$nettyVersion",
                 "io.netty:netty-handler:$nettyVersion",
                 "tools.jackson.core:jackson-databind:$jacksonVersion",
                 "tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion",
