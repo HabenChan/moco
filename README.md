@@ -53,7 +53,6 @@ java -jar moco-runner-<version>-standalone.jar http -p 12306 -c foo.json
 * Detailed [REST API](moco-doc/rest-apis.md)
 * Detailed [Websocket API](moco-doc/websocket-apis.md)
 * Detailed [SSE API](moco-doc/sse-apis.md)
-* Detailed [HTTP/2 API](moco-doc/http2-api.md)
 * [Global Settings](moco-doc/global-settings.md) for multiple configuration files.
 * [Command Line Usages](moco-doc/cmd.md)
 * [Extend Moco](moco-doc/extending.md) if current API does not meet your requirement.
