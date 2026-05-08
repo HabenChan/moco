@@ -1,3 +1,5 @@
+-ignorewarnings
+
 -printusage shrinking.output
 
 -dontobfuscate
