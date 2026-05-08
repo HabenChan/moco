@@ -410,12 +410,6 @@ public abstract class AbstractProxyResponseHandler extends AbstractHttpResponseH
                         return;
                     }
                     closed = true;
-                    if (onEvent != null) {
-                        ImmutableList<SseEvent> collectedEvents = collected.build();
-                        if (!collectedEvents.isEmpty()) {
-                            onEvent.accept(collectedEvents);
-                        }
-                    }
                     try {
                         closeable.close();
                     } catch (IOException ignored) {
