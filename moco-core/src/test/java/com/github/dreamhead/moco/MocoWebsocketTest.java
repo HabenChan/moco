@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.dreamhead.moco.Moco.binary;
 import static com.github.dreamhead.moco.Moco.by;
@@ -16,7 +17,6 @@ import static com.github.dreamhead.moco.Runner.running;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class MocoWebsocketTest extends AbstractMocoHttpTest {
     private WebSocketServer webSocketServer;
@@ -180,9 +180,9 @@ public class MocoWebsocketTest extends AbstractMocoHttpTest {
             endpointBar.clearMessage();
 
             endpointFoo.sendTextMessage("foo");
-            assertThat(endpointFoo.getMessage(), is("foo".getBytes()));
+            assertThat(endpointFoo.getMessage(3, TimeUnit.SECONDS), is("foo".getBytes()));
 
-            byte[] message = endpointBar.getMessage(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+            byte[] message = endpointBar.getMessage(5000, TimeUnit.MILLISECONDS);
             assertThat(message, is(new byte[0]));
         });
     }

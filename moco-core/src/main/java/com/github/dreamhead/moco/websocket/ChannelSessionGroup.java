@@ -8,18 +8,19 @@ import io.netty.channel.group.ChannelGroup;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Multimaps.synchronizedMultimap;
 
 public class ChannelSessionGroup {
     private final ChannelGroup group;
-    private Multimap<MocoGroup, Channel> groupChannels;
-    private Map<Channel, MocoGroup> channelGroups;
+    private final Multimap<MocoGroup, Channel> groupChannels;
+    private final Map<Channel, MocoGroup> channelGroups;
 
     public ChannelSessionGroup(final ChannelGroup group) {
         this.group = group;
-        this.groupChannels = HashMultimap.create();
-        this.channelGroups = newHashMap();
+        this.groupChannels = synchronizedMultimap(HashMultimap.create());
+        this.channelGroups = new ConcurrentHashMap<>();
     }
 
     public final void add(final Channel channel) {

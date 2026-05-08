@@ -1,7 +1,9 @@
 package com.github.dreamhead.moco.internal;
 
 import com.github.dreamhead.moco.model.DefaultMutableHttpResponse;
+import com.github.dreamhead.moco.model.MessageContent;
 import com.github.dreamhead.moco.sse.SseEvent;
+import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -97,11 +99,7 @@ public class Http2StreamHandler extends SimpleChannelInboundHandler<Http2StreamF
 
     private FullHttpRequest convertToMocoRequest(final Http2Headers http2Headers, final String body) {
         String method = http2Headers.method() != null ? http2Headers.method().toString() : "GET";
-        String path = http2Headers.path() != null ? http2Headers.path().toString() : "/";
-        String scheme = http2Headers.scheme() != null ? http2Headers.scheme().toString() : "http";
-
-        String authority = http2Headers.authority() != null ? http2Headers.authority().toString() : "localhost";
-        String uri = scheme + "://" + authority + path;
+        String uri = http2Headers.path() != null ? http2Headers.path().toString() : "/";
 
         FullHttpRequest request = new DefaultFullHttpRequest(
             HttpVersion.HTTP_1_1,
@@ -131,12 +129,8 @@ public class Http2StreamHandler extends SimpleChannelInboundHandler<Http2StreamF
             Http2Headers responseHeaders = toHttp2Headers(httpResponse);
             ctx.write(new DefaultHttp2HeadersFrame(responseHeaders));
 
-            if (httpResponse.getContent().hasContent()) {
-                ByteBuf content = Unpooled.wrappedBuffer(httpResponse.getContent().getContent());
-                ctx.writeAndFlush(new DefaultHttp2DataFrame(content, true));
-            } else {
-                ctx.writeAndFlush(new DefaultHttp2DataFrame(Unpooled.EMPTY_BUFFER, true));
-            }
+            ByteBuf content = toByteBuf(httpResponse.getContent());
+            ctx.writeAndFlush(new DefaultHttp2DataFrame(content, true));
 
         } catch (Exception e) {
             logger.error("Error sending HTTP/2 response", e);
@@ -168,14 +162,30 @@ public class Http2StreamHandler extends SimpleChannelInboundHandler<Http2StreamF
         }
     }
 
+    private ByteBuf toByteBuf(final MessageContent content) {
+        if (content != null && content.hasContent()) {
+            return Unpooled.wrappedBuffer(content.getContent());
+        }
+        return Unpooled.EMPTY_BUFFER;
+    }
+
+    private static final ImmutableSet<String> HTTP2_DISALLOWED_HEADERS = ImmutableSet.of(
+            "connection", "keep-alive", "proxy-connection",
+            "transfer-encoding", "upgrade",
+            "content-length"
+    );
+
     private Http2Headers toHttp2Headers(final DefaultMutableHttpResponse response) {
         Http2Headers headers = new DefaultHttp2Headers();
 
         headers.status(String.valueOf(response.getStatus()));
 
         for (String name : response.getHeaders().keySet()) {
+            if (HTTP2_DISALLOWED_HEADERS.contains(name.toLowerCase())) {
+                continue;
+            }
             for (String value : response.getHeaders().get(name)) {
-                headers.set(name, value);
+                headers.set(name.toLowerCase(), value);
             }
         }
 
