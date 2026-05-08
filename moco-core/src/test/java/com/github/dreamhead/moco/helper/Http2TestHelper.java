@@ -51,6 +51,7 @@ public class Http2TestHelper implements Closeable {
         this(false);
     }
 
+    @SuppressWarnings("deprecation")
     public Http2TestHelper(final boolean useHttps) {
         this.workerGroup = new NioEventLoopGroup();
         this.useHttps = useHttps;
