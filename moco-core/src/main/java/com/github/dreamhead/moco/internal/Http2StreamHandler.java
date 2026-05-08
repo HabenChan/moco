@@ -66,8 +66,6 @@ public class Http2StreamHandler extends SimpleChannelInboundHandler<Http2StreamF
         ByteBuf content = dataFrame.content();
         requestBodyBuilder.append(content.toString(StandardCharsets.UTF_8));
 
-        dataFrame.release();
-
         if (dataFrame.isEndStream()) {
             processRequest(ctx);
         }
