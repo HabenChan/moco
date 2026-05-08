@@ -82,6 +82,16 @@ public class Endpoint {
         }
     }
 
+    public byte[] getMessage(final long timeout, final TimeUnit unit) {
+        try {
+            return message.get(timeout, unit);
+        } catch (InterruptedException | ExecutionException e) {
+            return new byte[0];
+        } catch (TimeoutException e) {
+            return new byte[0];
+        }
+    }
+
     public void ping(final String message) {
         clearMessage();
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());

@@ -182,12 +182,8 @@ public class MocoWebsocketTest extends AbstractMocoHttpTest {
             endpointFoo.sendTextMessage("foo");
             assertThat(endpointFoo.getMessage(), is("foo".getBytes()));
 
-            try {
-                endpointBar.getMessage();
-                fail();
-            } catch (IllegalStateException e) {
-                // ignored
-            }
+            byte[] message = endpointBar.getMessage(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+            assertThat(message, is(new byte[0]));
         });
     }
 
