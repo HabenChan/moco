@@ -1,7 +1,8 @@
 plugins {
     id 'moco-java-conventions'
-    id 'moco-publishing-conventions'
 }
+
+apply from: rootProject.file('moco-publishing.gradle')
 
 evaluationDependsOn(':moco-core')
 evaluationDependsOn(':moco-runner')

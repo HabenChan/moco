@@ -14,8 +14,9 @@ buildscript {
 plugins {
     id 'moco-java-conventions'
     id 'moco-testing-conventions'
-    id 'moco-publishing-conventions'
 }
+
+apply from: rootProject.file('moco-publishing.gradle')
 
 evaluationDependsOn(':moco-core')
 
