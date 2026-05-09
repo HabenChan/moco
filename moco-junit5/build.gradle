@@ -1,21 +1,25 @@
-project.dependencies {
-    api(project(':moco-core'))
-    api(project(':moco-runner'))
-    api("org.junit.jupiter:junit-jupiter-api:$junit5BaseVersion")
-
-    testImplementation(
-            rootProject.project(':moco-core').sourceSets.test.output,
-            rootProject.project(':moco-runner').sourceSets.test.output,
-            "org.junit.jupiter:junit-jupiter-api:$junit5BaseVersion",
-            "org.junit.jupiter:junit-jupiter-engine:$junit5BaseVersion",
-    )
-
-
-    testRuntimeOnly(
-            "org.junit.platform:junit-platform-launcher:$junitPlatformVersion"
-    )
+plugins {
+    id 'moco-java-conventions'
+    id 'moco-testing-conventions'
+    id 'moco-publishing-conventions'
 }
 
-test {
-    useJUnitPlatform()
+evaluationDependsOn(':moco-core')
+evaluationDependsOn(':moco-runner')
+
+def coreTestOutput = project(':moco-core').sourceSets.test.output
+def runnerTestOutput = project(':moco-runner').sourceSets.test.output
+
+dependencies {
+    api(project(':moco-core'))
+    api(project(':moco-runner'))
+    api(libs.junit.jupiter5.api)
+    implementation(libs.guava)
+
+    testImplementation(coreTestOutput)
+    testImplementation(runnerTestOutput)
+
+    testImplementation(libs.hamcrest.core)
+    testImplementation(libs.hamcrest.library)
+    testImplementation(libs.httpclient.fluent)
 }

@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" << "-Xlint:-options"
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Package': 'com.github.dreamhead',
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor': 'Zheng Ye',
+                'Built-By': 'Zheng Ye',
+                'Built-Date': new Date().getDateTimeString(),
+                'Built-With': "gradle-${project.gradle.gradleVersion}, groovy-${GroovySystem.getVersion()}",
+                'Created-By': "Java ${System.getProperty('java.version')} (${System.getProperty('java.vendor')})"
+        )
+    }
+}
+
+group = 'com.github.dreamhead'
+version = '2.0.0-SNAPSHOT'

@@ -1,0 +1,25 @@
+plugins {
+    id 'moco-java-conventions'
+    id 'moco-testing-conventions'
+    id 'moco-publishing-conventions'
+}
+
+dependencies {
+    implementation(libs.guava)
+    implementation(libs.netty.codec.http)
+    implementation(libs.netty.codec.http2)
+    implementation(libs.netty.handler)
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.dataformat.xml)
+    implementation(libs.json.path)
+    implementation(libs.freemarker)
+    implementation(libs.slf4j.api)
+
+    testImplementation(libs.hamcrest.core)
+    testImplementation(libs.hamcrest.library)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.httpclient.fluent)
+    testImplementation(libs.jsonassert)
+    testImplementation(libs.websocket.api)
+    testRuntimeOnly(libs.tyrus.client)
+}

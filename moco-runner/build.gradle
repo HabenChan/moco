@@ -11,19 +11,40 @@ buildscript {
     }
 }
 
-project.dependencies {
+plugins {
+    id 'moco-java-conventions'
+    id 'moco-testing-conventions'
+    id 'moco-publishing-conventions'
+}
+
+evaluationDependsOn(':moco-core')
+
+def coreTestOutput = project(':moco-core').sourceSets.test.output
+def coreTestResources = project(':moco-core').sourceSets.test.resources
+def runnerMainResources = sourceSets.main.resources
+
+dependencies {
     api(project(':moco-core'))
-    implementation("commons-cli:commons-cli:$commonsCliVersion")
+    implementation(libs.guava)
+    implementation(libs.netty.handler)
+    implementation(libs.jackson.databind)
+    implementation(libs.slf4j.api)
+    implementation(libs.commons.cli)
 
-    runtimeOnly("org.tinylog:slf4j-tinylog:$tinylogVersion")
-    runtimeOnly("org.tinylog:tinylog-impl:$tinylogVersion")
+    runtimeOnly(libs.tinylog.slf4j)
+    runtimeOnly(libs.tinylog.impl)
 
-    testImplementation rootProject.project(':moco-core').sourceSets.test.output
+    testImplementation(libs.hamcrest.core)
+    testImplementation(libs.hamcrest.library)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.httpclient.fluent)
+    testImplementation(libs.jsonassert)
+    testImplementation(libs.websocket.api)
 
-    testRuntimeOnly(
-            rootProject.project(':moco-core').sourceSets.test.resources,
-            rootProject.project(':moco-runner').sourceSets.main.resources
-    )
+    testImplementation(coreTestOutput)
+    testRuntimeOnly(coreTestResources)
+    testRuntimeOnly(runnerMainResources)
+    testRuntimeOnly(libs.tyrus.client)
 }
 
 task uberjar(type: Jar, dependsOn: jar) {
@@ -75,16 +96,16 @@ task proguardCheck(type: Test, dependsOn: proguard) {
     useJUnitPlatform()
 
     classpath = findTestJar('httpclient5') +
-                findTestJar('httpclient5-fluent') +
-                findTestJar('httpcore5') +
-                files(proguard.outputs.files.singleFile) +
-                configurations.testRuntimeClasspath -
-                files(sourceSets.main.output.classesDirs) +
-                sourceSets.test.output
+            findTestJar('httpclient5-fluent') +
+            findTestJar('httpcore5') +
+            files(proguard.outputs.files.singleFile) +
+            configurations.testRuntimeClasspath -
+            files(sourceSets.main.output.classesDirs) +
+            sourceSets.test.output
 }
 
-if (rootProject.ext.isPublishingJvm) {
-    afterEvaluate {
+afterEvaluate {
+    if (JavaVersion.current().getMajorVersion().toInteger() in (17..24)) {
         publishing.publications.findByName('maven').artifact(proguard.outputs.files.singleFile) {
             classifier = "standalone"
         }

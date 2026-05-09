@@ -1,0 +1,34 @@
+def isPublishingJvm = JavaVersion.current().getMajorVersion().toInteger() in (17..24)
+
+if (isPublishingJvm) {
+    apply plugin: 'com.vanniktech.maven.publish'
+
+    mavenPublishing {
+        publishToMavenCentral()
+        signAllPublications()
+
+        pom {
+            name = project.name
+            description = 'Moco is an easy setup stub framework, mainly focusing on testing and integration.'
+            url = 'https://github.com/dreamhead/moco'
+            licenses {
+                license {
+                    name = 'MIT Licence'
+                    url = 'https://raw.githubusercontent.com/dreamhead/moco/master/MIT-LICENSE.txt'
+                }
+            }
+            developers {
+                developer {
+                    id = 'dreamhead'
+                    name = 'Zheng Ye'
+                    email = 'dreamhead.cn@gmail.com'
+                }
+            }
+            scm {
+                connection = 'scm:git:https://github.com/dreamhead/moco.git'
+                developerConnection = 'scm:git:https://github.com/dreamhead/moco.git'
+                url = 'https://github.com/dreamhead/moco'
+            }
+        }
+    }
+}
