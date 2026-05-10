@@ -4,7 +4,6 @@ import com.github.dreamhead.moco.bootstrap.BootstrapTask;
 import com.github.dreamhead.moco.bootstrap.arg.StartArgs;
 import com.github.dreamhead.moco.bootstrap.parser.HttpArgsParser;
 import com.github.dreamhead.moco.bootstrap.parser.HttpsArgsParser;
-import com.github.dreamhead.moco.bootstrap.parser.SocketArgsParser;
 import com.github.dreamhead.moco.bootstrap.parser.StartArgsParser;
 import com.github.dreamhead.moco.runner.Runner;
 import com.github.dreamhead.moco.runner.RunnerFactory;
@@ -47,9 +46,5 @@ public final class StartTask implements BootstrapTask {
 
     public static BootstrapTask https(final String shutdownKey) {
         return new StartTask(shutdownKey, new HttpsArgsParser());
-    }
-
-    public static BootstrapTask socket(final String shutdownKey) {
-        return new StartTask(shutdownKey, new SocketArgsParser());
     }
 }

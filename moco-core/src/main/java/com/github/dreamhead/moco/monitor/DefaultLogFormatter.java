@@ -4,13 +4,9 @@ import com.github.dreamhead.moco.HttpRequest;
 import com.github.dreamhead.moco.HttpResponse;
 import com.github.dreamhead.moco.Request;
 import com.github.dreamhead.moco.Response;
-import com.github.dreamhead.moco.SocketRequest;
-import com.github.dreamhead.moco.SocketResponse;
 import com.github.dreamhead.moco.dumper.Dumper;
 import com.github.dreamhead.moco.dumper.HttpRequestDumper;
 import com.github.dreamhead.moco.dumper.HttpResponseDumper;
-import com.github.dreamhead.moco.dumper.SocketRequestDumper;
-import com.github.dreamhead.moco.dumper.SocketResponseDumper;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.PrintWriter;
@@ -19,13 +15,11 @@ import java.util.Optional;
 
 public final class DefaultLogFormatter implements LogFormatter {
     private static final ImmutableMap<Class<? extends Request>, Dumper<Request>> REQUEST_DUMPERS = ImmutableMap.of(
-            HttpRequest.class, new HttpRequestDumper(),
-            SocketRequest.class, new SocketRequestDumper()
+            HttpRequest.class, new HttpRequestDumper()
     );
 
     private static final ImmutableMap<Class<? extends Response>, Dumper<Response>> RESPONSE_DUMPERS = ImmutableMap.of(
-            HttpResponse.class, new HttpResponseDumper(),
-            SocketResponse.class, new SocketResponseDumper()
+            HttpResponse.class, new HttpResponseDumper()
     );
 
     @Override

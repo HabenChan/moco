@@ -49,7 +49,7 @@ java -jar moco-runner-<version>-standalone.jar http -p 12306 -c foo.json
 
 ## Documents
 * More [Usages](moco-doc/usage.md)
-* Detailed [HTTP APIs](moco-doc/apis.md) or [Socket APIs](moco-doc/socket-apis.md)
+* Detailed [HTTP APIs](moco-doc/apis.md)
 * Detailed [REST API](moco-doc/rest-apis.md)
 * Detailed [Websocket API](moco-doc/websocket-apis.md)
 * Detailed [SSE API](moco-doc/sse-apis.md)

@@ -23,7 +23,6 @@ Table of Contents
 * [Server Type](#server-type)
   * [HTTP Server](#http-server)
   * [HTTPS Server](#https-server)
-  * [Socket Server](#socket-server)
 * [Configuration Files](#configuration-files)
   * [One Configuration File](#one-configuration-file)
   * [Many Configuration Files](#many-configuration-files)
@@ -53,14 +52,6 @@ A HTTPS server can be started by the following command:
 
 ```shell
 java -jar moco-runner-<version>-standalone.jar https -p 12306 -c foo.json --https /path/to/cert.jks --cert mocohttps --keystore mocohttps
-```
-
-### Socket Server
-
-A socket server can be started by the following command:
-
-```shell
-java -jar moco-runner-<version>-standalone.jar socket -p 12306 -c foo.json
 ```
 
 ## Configuration Files

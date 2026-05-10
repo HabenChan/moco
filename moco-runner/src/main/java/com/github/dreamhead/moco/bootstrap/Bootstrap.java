@@ -17,7 +17,6 @@ public class Bootstrap implements BootstrapTask {
             .put("shutdown", new ShutdownTask(DEFAULT_SHUTDOWN_KEY))
             .put("http", StartTask.http(DEFAULT_SHUTDOWN_KEY))
             .put("https", StartTask.https(DEFAULT_SHUTDOWN_KEY))
-            .put("socket", StartTask.socket(DEFAULT_SHUTDOWN_KEY))
             .put("version", new VersionTask())
             .build();
 

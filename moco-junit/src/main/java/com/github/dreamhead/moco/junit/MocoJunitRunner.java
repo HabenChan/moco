@@ -5,14 +5,12 @@ import com.github.dreamhead.moco.HttpsCertificate;
 import com.github.dreamhead.moco.HttpsServer;
 import com.github.dreamhead.moco.RestServer;
 import com.github.dreamhead.moco.Runner;
-import com.github.dreamhead.moco.SocketServer;
 import com.github.dreamhead.moco.resource.Resource;
 import org.junit.rules.ExternalResource;
 
 import static com.github.dreamhead.moco.Moco.file;
 import static com.github.dreamhead.moco.MocoJsonRunner.jsonHttpServer;
 import static com.github.dreamhead.moco.MocoJsonRunner.jsonHttpsServer;
-import static com.github.dreamhead.moco.MocoJsonRunner.jsonSocketServer;
 import static com.github.dreamhead.moco.Runner.runner;
 import static com.github.dreamhead.moco.util.Preconditions.checkNotNullOrEmpty;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -66,23 +64,6 @@ public final class MocoJunitRunner extends ExternalResource {
     public static MocoJunitRunner restRunner(final RestServer server) {
         checkNotNull(server, "Server should not be null");
         return httpRunner(server);
-    }
-
-    public static MocoJunitRunner jsonSocketRunner(final int port, final String filename) {
-        checkArgument(port > 0, "Port must be greater than zero");
-        checkNotNullOrEmpty(filename, "Filename should not be null");
-        return jsonSocketRunner(port, file(filename));
-    }
-
-    public static MocoJunitRunner jsonSocketRunner(final int port, final Resource file) {
-        checkArgument(port > 0, "Port must be greater than zero");
-        checkNotNull(file, "File should not be null");
-        return new MocoJunitRunner(runner(jsonSocketServer(port, file)));
-    }
-
-    public static MocoJunitRunner socketRunner(final SocketServer server) {
-        checkNotNull(server, "Server should not be null");
-        return new MocoJunitRunner(runner(server));
     }
 
     public static MocoJunitRunner jsonRestRunner(final int port, final String filename) {

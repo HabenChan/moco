@@ -9,7 +9,6 @@ import com.github.dreamhead.moco.MocoEventTrigger;
 import com.github.dreamhead.moco.RequestMatcher;
 import com.github.dreamhead.moco.ResponseHandler;
 import com.github.dreamhead.moco.RestSetting;
-import com.github.dreamhead.moco.SocketServer;
 import com.github.dreamhead.moco.WebSocketServer;
 import com.github.dreamhead.moco.internal.ActualHttpServer;
 import com.github.dreamhead.moco.parser.model.websocket.WebsocketSetting;
@@ -89,15 +88,6 @@ public final class SessionSetting {
             final WebSocketServer webSocketServer = server.websocket(this.websocket.getUri());
             websocket.bind(webSocketServer);
         }
-    }
-
-    public void bindTo(final SocketServer server) {
-        if (isAnyResponse()) {
-            server.response(getResponseHandler());
-            return;
-        }
-
-        server.request(getRequestMatcher()).response(getResponseHandler());
     }
 
     private boolean isWebsocketServer() {

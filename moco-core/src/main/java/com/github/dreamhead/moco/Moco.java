@@ -22,7 +22,6 @@ import com.github.dreamhead.moco.handler.failover.Failover;
 import com.github.dreamhead.moco.handler.failover.FailoverStrategy;
 import com.github.dreamhead.moco.handler.proxy.ProxyConfig;
 import com.github.dreamhead.moco.internal.ActualHttpServer;
-import com.github.dreamhead.moco.internal.ActualSocketServer;
 import com.github.dreamhead.moco.internal.ApiUtils;
 import com.github.dreamhead.moco.matcher.AndRequestMatcher;
 import com.github.dreamhead.moco.matcher.ConditionalRequestMatcher;
@@ -136,30 +135,6 @@ public final class Moco {
                         checkNotNull(monitor2, "Monitor should not be null"),
                         checkNotNull(monitors, "Monitors should not be null")));
     }
-
-    public static SocketServer socketServer() {
-        return ActualSocketServer.createQuietServer(0);
-    }
-
-    public static SocketServer socketServer(final int port) {
-        checkArgument(port > 0, "Port must be greater than zero");
-        return ActualSocketServer.createQuietServer(port);
-    }
-
-    public static SocketServer socketServer(final int port, final MocoMonitor monitor) {
-        checkArgument(port > 0, "Port must be greater than zero");
-        return ActualSocketServer.createServerWithMonitor(port,
-                checkNotNull(monitor, "Monitor should not be null"));
-    }
-
-    public static SocketServer socketServer(final int port, final MocoMonitor monitor, final MocoMonitor monitor2, final MocoMonitor... monitors) {
-        checkArgument(port > 0, "Port must be greater than zero");
-        return ActualSocketServer.createServerWithMonitor(port,
-                ApiUtils.mergeMonitor(checkNotNull(monitor, "Monitor should not be null"),
-                        checkNotNull(monitor2, "Monitor should not be null"),
-                        checkNotNull(monitors, "Monitors should not be null")));
-    }
-
 
     public static MocoConfig<?> context(final String context) {
         return new MocoContextConfig(checkNotNullOrEmpty(context, "Context should not be null"));

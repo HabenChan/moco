@@ -2,7 +2,6 @@ package com.github.dreamhead.moco.bootstrap;
 
 import com.github.dreamhead.moco.bootstrap.arg.StartArgs;
 import com.github.dreamhead.moco.bootstrap.parser.HttpArgsParser;
-import com.github.dreamhead.moco.bootstrap.parser.SocketArgsParser;
 import com.github.dreamhead.moco.bootstrap.parser.StartArgsParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,11 +71,5 @@ public class StartArgsTest {
         StartArgs args = startArgsParser.parse(new String[]{"start", "-c", "foo.json"});
         assertThat(args.getPort().isPresent(), is(false));
         assertThat(args.getConfigurationFile().get(), is("foo.json"));
-    }
-
-    @Test
-    public void should_parse_socket() {
-        StartArgs args = new SocketArgsParser().parse(new String[]{"start", "-c", "foo.json"});
-        assertThat(args.isSocket(), is(true));
     }
 }

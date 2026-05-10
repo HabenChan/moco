@@ -3,12 +3,9 @@ package com.github.dreamhead.moco.runner;
 import com.github.dreamhead.moco.HttpServer;
 import com.github.dreamhead.moco.MocoConfig;
 import com.github.dreamhead.moco.Server;
-import com.github.dreamhead.moco.SocketServer;
 import com.github.dreamhead.moco.bootstrap.arg.StartArgs;
 import com.github.dreamhead.moco.internal.ActualHttpServer;
-import com.github.dreamhead.moco.internal.ActualSocketServer;
 import com.github.dreamhead.moco.parser.HttpServerParser;
-import com.github.dreamhead.moco.parser.SocketServerParser;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
@@ -29,7 +26,6 @@ import static com.google.common.collect.Iterables.toArray;
 public final class JsonRunner implements Runner {
 
     private final HttpServerParser httpParser = new HttpServerParser();
-    private final SocketServerParser socketParser = new SocketServerParser();
     private final StandaloneRunner runner = new StandaloneRunner();
     private final Server server;
 
@@ -38,10 +34,6 @@ public final class JsonRunner implements Runner {
     }
 
     private Server newServer(final Iterable<? extends RunnerSetting> settings, final StartArgs startArgs) {
-        if (startArgs.isSocket()) {
-            return createSocketServer(settings, startArgs);
-        }
-
         return createHttpServer(settings, startArgs);
     }
 
@@ -51,26 +43,6 @@ public final class JsonRunner implements Runner {
 
     public void stop() {
         runner.stop();
-    }
-
-    private SocketServer createSocketServer(final Iterable<? extends RunnerSetting> settings,
-                                            final StartArgs startArgs) {
-        int port = startArgs.getPort().orElse(0);
-
-        SocketServer socketServer = ActualSocketServer.createSocketServer(port, startArgs.isQuiet());
-
-        for (RunnerSetting setting : settings) {
-            SocketServer parsedServer = socketParser.parseServer(setting.getStreams(), port, startArgs.isQuiet(),
-                    toConfigs(setting));
-            socketServer = mergeServer(socketServer, parsedServer);
-        }
-
-        return socketServer;
-    }
-
-    private SocketServer mergeServer(final SocketServer socketServer, final SocketServer parsedServer) {
-        ActualSocketServer thisServer = (ActualSocketServer) socketServer;
-        return thisServer.mergeServer((ActualSocketServer) parsedServer);
     }
 
     private HttpServer createHttpServer(final Iterable<? extends RunnerSetting> settings, final StartArgs startArgs) {

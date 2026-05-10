@@ -3,7 +3,6 @@ package com.github.dreamhead.moco.runner;
 import com.github.dreamhead.moco.HttpServer;
 import com.github.dreamhead.moco.Runner;
 import com.github.dreamhead.moco.Server;
-import com.github.dreamhead.moco.SocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +20,6 @@ public final class StandaloneRunner {
     private Runner newRunner(final Server server) {
         if (server instanceof HttpServer) {
             return Runner.runner((HttpServer) server);
-        }
-
-        if (server instanceof SocketServer) {
-            return Runner.runner((SocketServer) server);
         }
 
         throw new IllegalArgumentException("Unknown server type:" + server.getClass().getName());
